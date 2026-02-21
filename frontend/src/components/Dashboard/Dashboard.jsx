@@ -69,7 +69,7 @@ export default function Dashboard() {
           );
         })}
 
-        // To be edited later
+        {/* ── To be edited later ── */}
         <div className="sidebar__footer">
           <p>Logged in as User</p>
           <p>v0.1 · Baseline Build</p>

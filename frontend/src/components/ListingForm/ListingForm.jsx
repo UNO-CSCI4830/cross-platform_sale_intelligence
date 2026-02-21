@@ -69,20 +69,20 @@ export function AddListingForm({ onAdd, onClose, onDelete, initial }) {
 
         {/* Header */}
         <div className="form-panel__header">
-          <h3 className="form-panel__title">New Listing</h3>
+          <h3 className="form-panel__title">{isEditing ? "Edit Listing" : "New Listing"}</h3>
           <button className="form-panel__close" onClick={onClose}>✕</button>
         </div>
 
         {/* Form fields */}
         <div className="form-grid">
-          <Field label="Platform"    fieldKey="platform"  options={PLATFORMS.slice(1)} />
-          <Field label="Category"    fieldKey="category"  options={CATEGORIES} />
+          <Field label="Platform"  fieldKey="platform"  value={form.platform}  onChange={handleChange} options={PLATFORMS.slice(1)} />
+          <Field label="Category"  fieldKey="category"  value={form.category}  onChange={handleChange} options={CATEGORIES} />
           <div className="form-grid--full">
-            <Field label="Title" fieldKey="title" />
+            <Field label="Title"   fieldKey="title"     value={form.title}     onChange={handleChange} />
           </div>
-          <Field label="Size"        fieldKey="size" />
-          <Field label="Condition"   fieldKey="condition" options={CONDITIONS} />
-          <Field label="Price ($)"   fieldKey="price"     type="number" />
+          <Field label="Size"      fieldKey="size"      value={form.size}      onChange={handleChange} />
+          <Field label="Condition" fieldKey="condition" value={form.condition} onChange={handleChange} options={CONDITIONS} />
+          <Field label="Price ($)" fieldKey="price"     value={form.price}     onChange={handleChange} type="number" />
 
           {/* Notes — full width, textarea */}
           <div className="form-field form-grid--full">
@@ -104,7 +104,7 @@ export function AddListingForm({ onAdd, onClose, onDelete, initial }) {
           )}
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
         </div>
-        
+
       </div>
     </div>
   );
