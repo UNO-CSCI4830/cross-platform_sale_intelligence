@@ -150,3 +150,21 @@
 .btn-secondary:hover {
   color: #f0ede8;
 }
+
+
+.btn-danger {
+  flex: 1;
+  background: #2a1010;
+  color: #e05c5c;
+  border: 1px solid #5c2020;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-danger:hover {
+  background: #3a1515;
+}

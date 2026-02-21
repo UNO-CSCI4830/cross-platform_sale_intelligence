@@ -9,10 +9,12 @@ import { COLORS, PLATFORMS, LISTINGS } from "../../constants/data";
 //   listings       — array of listing objects
 //   activePlatform — currently selected sidebar filter
 //   showForm       — boolean, whether the Add Listing modal is open
+//   editingListing — listing object being edited, or null
 export default function Dashboard() {
   const [listings,        setListings]        = useState(LISTINGS);
   const [activePlatform,  setActivePlatform]  = useState("All Platforms");
   const [showForm,        setShowForm]        = useState(false);
+  const [editingListing,  setEditingListing]  = useState(null);
 
   // ── Derived values ────────────────────────────────────────────────────
   const filtered = activePlatform === "All Platforms"
@@ -20,14 +22,22 @@ export default function Dashboard() {
     : listings.filter((l) => l.platform === activePlatform);
 
   const totalValue = filtered.reduce((sum, l) => sum + l.price, 0);
-  const flagged    = filtered.filter((l) => l.stains || l.damage || l.fading).length;
   const avgPrice   = filtered.length
     ? (totalValue / filtered.length).toFixed(2)
     : "0.00";
 
   // ── Handlers ──────────────────────────────────────────────────────────
+  // Add a brand-new listing
   const handleAddListing = (newListing) =>
     setListings((prev) => [newListing, ...prev]);
+
+  // Save edits to an existing listing
+  const handleSaveListing = (updated) =>
+    setListings((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+
+  // Delete a listing by id
+  const handleDeleteListing = (id) =>
+    setListings((prev) => prev.filter((l) => l.id !== id));
 
   // ── Render ────────────────────────────────────────────────────────────
   return (
@@ -36,7 +46,7 @@ export default function Dashboard() {
       {/* ── Sidebar ── */}
       <aside className="sidebar">
         <div className="sidebar__brand">
-          <p className="sidebar__brand-name">ResaleIQ</p>
+          <p className="sidebar__brand-name">Cross-Platform Resale Intelligence</p>
           <p className="sidebar__brand-sub">Multi-Platform Dashboard</p>
         </div>
 
@@ -59,8 +69,9 @@ export default function Dashboard() {
           );
         })}
 
+        // To be edited later
         <div className="sidebar__footer">
-          <p>Logged in as Emily</p>
+          <p>Logged in as User</p>
           <p>v0.1 · Baseline Build</p>
         </div>
       </aside>
@@ -89,7 +100,6 @@ export default function Dashboard() {
           <StatCard label="Total Listings" value={filtered.length}             color={COLORS.text}   />
           <StatCard label="Total Value"    value={`$${totalValue.toFixed(2)}`} color={COLORS.accent} />
           <StatCard label="Avg Price"      value={`$${avgPrice}`}              color={COLORS.text}   />
-          <StatCard label="Flagged Items"  value={flagged}                     color={flagged > 0 ? COLORS.red : COLORS.green} />
         </div>
 
         {/* Listings */}
@@ -99,7 +109,13 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="listings-grid">
-            {filtered.map((l) => <GridCard key={l.id} listing={l} />)}
+            {filtered.map((l) => (
+              <GridCard
+                key={l.id}
+                listing={l}
+                onClick={() => setEditingListing(l)}
+              />
+            ))}
           </div>
         )}
       </main>
@@ -107,8 +123,10 @@ export default function Dashboard() {
       {/* Add Listing modal */}
       {showForm && (
         <AddListingForm
-          onAdd={handleAddListing}
-          onClose={() => setShowForm(false)}
+          initial={editingListing}
+          onAdd={handleSaveListing}
+          onDelete={handleDeleteListing}
+          onClose={() => setEditingListing(null)}
         />
       )}
     </div>

@@ -2,12 +2,36 @@ import { useState } from "react";
 import "./ListingForm.css";
 import { PLATFORMS, CONDITIONS, CATEGORIES } from "../../constants/data";
 
+// ── Field ────────────────────────────────────────────────────────
+function Field({ label, fieldKey, value, onChange, type = "text", options = null }) {
+  return (
+    <div className="form-field">
+      <label>{label}</label>
+      {options ? (
+        <select value={value} onChange={(e) => onChange(fieldKey, e.target.value)}>
+          {options.map((o) => <option key={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(fieldKey, e.target.value)}
+        />
+      )}
+    </div>
+  );
+}
+
 // ── AddListingForm ────────────────────────────────────────────────────────
 // Modal form for adding a new listing.
 // Props:
 //   onAdd   — callback(listing) called with the new listing object on submit
-//   onClose — callback() called when the modal should close
-export function AddListingForm({ onAdd, onClose }) {
+//   onClose — callback() called when the modal should close 
+//   onDelete   — optional callback(id) called when the listing is deleted
+//   initial    — optional existing listing object (triggers "edit" mode)
+export function AddListingForm({ onAdd, onClose, onDelete, initial }) {
+  const isEditing = !!initial;
+
   const [form, setForm] = useState({
     platform:  "Poshmark",
     title:     "",
@@ -21,37 +45,23 @@ export function AddListingForm({ onAdd, onClose }) {
     fading:    false,
   });
 
-  // Generic change handler for text/select inputs
-  const handleChange = (key) => (e) =>
-    setForm((prev) => ({ ...prev, [key]: e.target.value }));
-
-  // Generic change handler for checkboxes
-  const handleCheck = (key) => (e) =>
-    setForm((prev) => ({ ...prev, [key]: e.target.checked }));
+  const handleChange = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = () => {
-    if (!form.title.trim() || !form.price) return; // basic validation
-    onAdd({ ...form, id: Date.now(), price: parseFloat(form.price) });
+    if (!form.title.trim() || !form.price) return;
+    onAdd({
+      ...form,
+      id:    isEditing ? form.id : Date.now(),
+      price: parseFloat(form.price),
+    });
     onClose();
   };
 
-  // Reusable field renderer
-  const Field = ({ label, fieldKey, type = "text", options = null }) => (
-    <div className="form-field">
-      <label>{label}</label>
-      {options ? (
-        <select value={form[fieldKey]} onChange={handleChange(fieldKey)}>
-          {options.map((o) => <option key={o}>{o}</option>)}
-        </select>
-      ) : (
-        <input
-          type={type}
-          value={form[fieldKey]}
-          onChange={handleChange(fieldKey)}
-        />
-      )}
-    </div>
-  );
+  const handleDelete = () => {
+    if (onDelete) onDelete(form.id);
+    onClose();
+  };
 
   return (
     <div className="form-overlay">
@@ -79,17 +89,22 @@ export function AddListingForm({ onAdd, onClose }) {
             <label>Notes</label>
             <textarea
               value={form.notes}
-              onChange={handleChange("notes")}
+              onChange={(e) => handleChange("notes", e.target.value)}
             />
           </div>
         </div>
 
         {/* Actions */}
         <div className="form-actions">
-          <button className="btn-primary"   onClick={handleSubmit}>Add Listing</button>
+          <button className="btn-primary" onClick={handleSubmit}>
+            {isEditing ? "Save Changes" : "Add Listing"}
+          </button>
+          {isEditing && (
+            <button className="btn-danger" onClick={handleDelete}>Delete</button>
+          )}
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
         </div>
-
+        
       </div>
     </div>
   );

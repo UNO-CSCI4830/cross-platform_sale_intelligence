@@ -3,21 +3,20 @@ import { Badge, ConditionDots } from "../Badge";
 import { COLORS, PLATFORM_COLORS } from "../../constants/data";
 
 // Displays a single listing as a card in the grid view.
-// Props: listing (object)
+// Props:
+//   listing  — listing object
+//   onClick  — callback fired when the card is clicked (opens edit modal)
 export function GridCard({ listing }) {
   const pc = PLATFORM_COLORS[listing.platform] || COLORS.accent;
-  const hasFlag = listing.stains || listing.damage || listing.fading;
 
   return (
     <div
       className="grid-card"
       style={{ borderTop: `3px solid ${pc}` }}
+      onClick={onClick}
     >
       <div className="grid-card__header">
         <Badge label={listing.platform} color={pc} />
-        {hasFlag && (
-          <span className="grid-card__flag-label">⚠ FLAG</span>
-        )}
       </div>
 
       <div>
@@ -32,11 +31,6 @@ export function GridCard({ listing }) {
 
       <div className="grid-card__footer">
         <span className="grid-card__price">${listing.price}</span>
-        <div className="grid-card__flags">
-          <span className="grid-card__flag-text">stain</span>
-          <span className="grid-card__flag-text">dmg</span>
-          <span className="grid-card__flag-text">fade</span>
-        </div>
       </div>
 
       {listing.notes && (
