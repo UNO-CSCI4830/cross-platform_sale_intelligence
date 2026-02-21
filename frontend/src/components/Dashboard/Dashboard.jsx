@@ -123,6 +123,14 @@ export default function Dashboard() {
       {/* Add Listing modal */}
       {showForm && (
         <AddListingForm
+          onAdd={handleAddListing}
+          onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {/* Edit Listing modal */}
+      {editingListing && (
+        <AddListingForm
           initial={editingListing}
           onAdd={handleSaveListing}
           onDelete={handleDeleteListing}

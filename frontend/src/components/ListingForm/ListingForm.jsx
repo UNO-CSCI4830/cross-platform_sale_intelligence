@@ -32,18 +32,20 @@ function Field({ label, fieldKey, value, onChange, type = "text", options = null
 export function AddListingForm({ onAdd, onClose, onDelete, initial }) {
   const isEditing = !!initial;
 
-  const [form, setForm] = useState({
-    platform:  "Poshmark",
-    title:     "",
-    category:  "Tops",
-    size:      "",
-    condition: "Good",
-    price:     "",
-    notes:     "",
-    stains:    false,
-    damage:    false,
-    fading:    false,
-  });
+  const [form, setForm] = useState(
+    initial ?? {
+      platform:  "Poshmark",
+      title:     "",
+      category:  "Tops",
+      size:      "",
+      condition: "Good",
+      price:     "",
+      notes:     "",
+      stains:    false,
+      damage:    false,
+      fading:    false,
+    }
+  );
 
   const handleChange = (key, value) =>
     setForm((prev) => ({ ...prev, [key]: value }));
