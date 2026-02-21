@@ -6,7 +6,7 @@ import { COLORS, PLATFORM_COLORS } from "../../constants/data";
 // Props:
 //   listing  — listing object
 //   onClick  — callback fired when the card is clicked (opens edit modal)
-export function GridCard({ listing }) {
+export function GridCard({ listing, onClick }) {
   const pc = PLATFORM_COLORS[listing.platform] || COLORS.accent;
 
   return (
