@@ -1,0 +1,92 @@
+/* ── ListingCard.css ─────────────────────────────────────────────────────*/
+
+/* GRID CARD */
+.grid-card {
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s, transform 0.15s;
+  cursor: default;
+}
+
+.grid-card:hover {
+  border-color: #444;
+  transform: translateY(-1px);
+}
+
+.grid-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.grid-card__flag-label {
+  font-size: 10px;
+  color: #e05c5c;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.grid-card__title {
+  margin: 0;
+  font-weight: 600;
+  color: #f0ede8;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.grid-card__meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #7a7a7a;
+}
+
+.grid-card__condition-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.grid-card__condition-label {
+  font-size: 12px;
+  color: #7a7a7a;
+}
+
+.grid-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid #2a2a2a;
+}
+
+.grid-card__price {
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f0a500;
+}
+
+.grid-card__flags {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.grid-card__flag-text {
+  font-size: 10px;
+  color: #7a7a7a;
+}
+
+.grid-card__notes {
+  margin: 0;
+  font-size: 11px;
+  color: #7a7a7a;
+  font-style: italic;
+  border-top: 1px solid #2a2a2a;
+  padding-top: 8px;
+}

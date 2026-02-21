@@ -1,0 +1,195 @@
+/* ── Dashboard.css ───────────────────────────────────────────────────────
+   Main layout: shell, sidebar, header, stats bar, and listing grid.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Root shell ── */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: #0f0f0f;
+  font-family: "Georgia", serif;
+  color: #f0ede8;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 220px;
+  background: #161616;
+  border-right: 1px solid #2a2a2a;
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sidebar__brand {
+  padding: 0 6px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  margin-bottom: 8px;
+}
+
+.sidebar__brand-name {
+  margin: 0;
+  font-size: 11px;
+  color: #f0a500;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sidebar__brand-sub {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: #7a7a7a;
+}
+
+.sidebar__section-label {
+  margin: 0 0 6px 6px;
+  font-size: 10px;
+  color: #444;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Platform nav item */
+.sidebar__item {
+  padding: 8px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.15s;
+  color: #7a7a7a;
+}
+
+.sidebar__item:hover {
+  background: #1c1c1c;
+  color: #f0ede8;
+}
+
+.sidebar__item--active {
+  font-weight: 700;
+  color: #f0a500;
+  background: rgba(240, 165, 0, 0.13);
+}
+
+.sidebar__item-count {
+  font-size: 11px;
+  background: #2a2a2a;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.sidebar__footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #2a2a2a;
+}
+
+.sidebar__footer p {
+  margin: 0 0 4px 6px;
+  font-size: 10px;
+  color: #444;
+}
+
+/* ── Main content area ── */
+.main {
+  flex: 1;
+  padding: 28px 32px;
+  overflow-y: auto;
+}
+
+/* ── Page header ── */
+.main__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.main__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #f0ede8;
+}
+
+.main__subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #7a7a7a;
+}
+
+.main__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Add listing button */
+.btn-add {
+  background: #f0a500;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.btn-add:hover {
+  opacity: 0.9;
+}
+
+/* ── Stats bar ── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.stat-card__label {
+  margin: 0;
+  font-size: 11px;
+  color: #7a7a7a;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stat-card__value {
+  margin: 6px 0 0;
+  font-family: monospace;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* ── Grid layout ── */
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  color: #7a7a7a;
+  padding-top: 60px;
+  font-size: 14px;
+}
