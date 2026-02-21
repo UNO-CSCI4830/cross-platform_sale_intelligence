@@ -33,11 +33,8 @@ export function GridCard({ listing }) {
       <div className="grid-card__footer">
         <span className="grid-card__price">${listing.price}</span>
         <div className="grid-card__flags">
-          <FlagIcon active={listing.stains} />
           <span className="grid-card__flag-text">stain</span>
-          <FlagIcon active={listing.damage} />
           <span className="grid-card__flag-text">dmg</span>
-          <FlagIcon active={listing.fading} />
           <span className="grid-card__flag-text">fade</span>
         </div>
       </div>

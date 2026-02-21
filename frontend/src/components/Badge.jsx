@@ -1,4 +1,4 @@
-import { COLORS } from "../../constants/data";
+import { COLORS } from "../constants/data";
 
 // ── Badge ─────────────────────────────────────────────────────────────────
 // Props: label (string), color (hex string)
