@@ -4,18 +4,18 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
-from db.database import Base, engine, get_db
-from db.models import User
-from services.user_service import create_user, authenticate_user
+from backend.db.database import Base, engine, get_db
+from backend.db.models import User
+from backend.services.user_service import create_user, authenticate_user
 
-Base.meta.create_all(bind=engine) # Create tables
+Base.metadata.create_all(bind=engine) # Create tables
 
 # FastAPI app instance
 app = FastAPI()
 
 app.add_middleware( 
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,7 +37,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user: #If this user already exists
         raise HTTPException(status_code = 400, detail = "Email already registered")
-    created_user = create_user(user.email, user.passsword, db)
+    created_user = create_user(user.email, user.password, db)
     return {"id": created_user.id, "email": created_user.email}
 
 #Route for logging in
