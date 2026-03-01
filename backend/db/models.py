@@ -11,6 +11,26 @@ class User(Base):
     password_hash = Column(String, nullable = False)
     created_at = Column(DateTime, default=datetime.utcnow) # Coordinated Universal Time is 6 hours ahead of CST.
 
+# Represents a resale listing shown on the dashboard (FR5)
+class Listing(Base):
+    __tablename__ = "listings"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Links listing to a specific user
+    user_id = Column(Integer, nullable=False)
+
+    # Basic listing details shown on the dashboard
+    title = Column(String, nullable=False)
+    price = Column(Integer, nullable=False)
+    condition = Column(String, nullable=False)
+    platform = Column(String, nullable=False)
+
+    # Listing status (active or sold)
+    status = Column(String, default="active")
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # Represents a user-submitted issue or problem report
 class Issue(Base):
     __tablename__ = "issues"

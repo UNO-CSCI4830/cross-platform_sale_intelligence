@@ -1,5 +1,3 @@
-# KL added FR14, FR15: Report an Issue// allows users to submit system problems for review
-
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import sqlalchemy
@@ -7,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from backend.db.database import Base, engine, get_db
-from backend.db.models import User, Issue
+from backend.db.models import User, Issue, Listing
 from backend.services.user_service import create_user, authenticate_user
 
 Base.metadata.create_all(bind=engine) # Create tables
@@ -36,6 +34,18 @@ class UserLogin(BaseModel):
 # FR14: User Profile Update input model
 class UserUpdate(BaseModel):
     email: str  # New email address for the user
+
+# Data returned to the dashboard for each listing
+class ListingResponse(BaseModel):
+    id: int
+    title: str
+    price: int
+    condition: str
+    platform: str
+    status: str
+
+    class Config:
+        from_attributes = True
 
 # Schema for submitting a new issue report
 class IssueCreate(BaseModel):
@@ -87,6 +97,20 @@ def update_user_profile(
 
     return {"message": "User profile updated successfully"}
 
+# FR5: Unified Dashboard Display
+@app.get("/listings/{user_id}", response_model=list[ListingResponse])
+def get_user_listings(user_id: int, db: Session = Depends(get_db)):
+    """
+    Returns all active listings for a specific user
+    """
+    listings = (
+        db.query(Listing)
+        .filter(Listing.user_id == user_id, Listing.status == "active")
+        .all()
+    )
+
+    return listings
+
 @app.post("/issues")
 def report_issue(issue: IssueCreate, db: Session = Depends(get_db)):
     # Create a new Issue object from user input
@@ -122,6 +146,19 @@ def list_issues(db: Session = Depends(get_db)):
         for i in issues
     ]
 
+# Temporary test data for dashboard development
+@app.get("/test/add-listing")
+def add_test_listing(db: Session = Depends(get_db)):
+    listing = Listing(
+        user_id=1,
+        title="Nike Tech Fleece Set",
+        price=120,
+        condition="Excellent",
+        platform="Depop"
+    )
+    db.add(listing)
+    db.commit()
+    return {"message": "Test listing added"}
 
 @app.get("/") # This is a decorator for HTML GET. Just "/" is the base page
 def root():
