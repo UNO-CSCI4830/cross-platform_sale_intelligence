@@ -1,3 +1,5 @@
+# KL added FR14, FR15: Report an Issue// allows users to submit system problems for review
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import sqlalchemy
@@ -5,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from backend.db.database import Base, engine, get_db
-from backend.db.models import User
+from backend.db.models import User, Issue
 from backend.services.user_service import create_user, authenticate_user
 
 Base.metadata.create_all(bind=engine) # Create tables
@@ -31,6 +33,23 @@ class UserLogin(BaseModel):
     email:str
     password: str
 
+# FR14: User Profile Update input model
+class UserUpdate(BaseModel):
+    email: str  # New email address for the user
+
+# Schema for submitting a new issue report
+class IssueCreate(BaseModel):
+    email: str | None = None  # Optional contact email
+    message: str              # Description of the issue
+
+
+# Schema for returning issue data
+class IssueOut(BaseModel):
+    id: int
+    email: str | None
+    message: str
+    created_at: str
+
 #Route for signing up
 @app.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
@@ -47,6 +66,62 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     if not authenticated_user: #user fails to login, authenticate_user returns None, making this if statement true and returns an error
         raise HTTPException(status_code = 400, detail = "Invalid credentials")
     return {"id": authenticated_user.id, "email": authenticated_user.email}
+
+@app.put("/users/{user_id}")
+def update_user_profile(
+    user_id: int,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    FR14: Allows a user to update their profile information (email).
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.email = user_update.email  # Update email
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "User profile updated successfully"}
+
+@app.post("/issues")
+def report_issue(issue: IssueCreate, db: Session = Depends(get_db)):
+    # Create a new Issue object from user input
+    new_issue = Issue(
+        email=issue.email,
+        message=issue.message
+    )
+
+    # Save the issue to the database
+    db.add(new_issue)
+    db.commit()
+    db.refresh(new_issue)
+
+    # Confirm successful submission
+    return {
+        "status": "received",
+        "issue_id": new_issue.id
+    }
+
+@app.get("/issues")
+def list_issues(db: Session = Depends(get_db)):
+    # Retrieve all reported issues, newest first
+    issues = db.query(Issue).order_by(Issue.id.desc()).all()
+
+    # Format issue data for response
+    return [
+        {
+            "id": i.id,
+            "email": i.email,
+            "message": i.message,
+            "created_at": str(i.created_at),
+        }
+        for i in issues
+    ]
+
 
 @app.get("/") # This is a decorator for HTML GET. Just "/" is the base page
 def root():
