@@ -193,3 +193,23 @@
   padding-top: 60px;
   font-size: 14px;
 }
+
+/* ── Sidebar logout button ── */
+.sidebar__logout {
+  margin-top: 8px;
+  margin-left: 6px;
+  background: none;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #7a7a7a;
+  font-size: 10px;
+  font-family: inherit;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.sidebar__logout:hover {
+  color: #e05c5c;
+  border-color: rgba(224, 92, 92, 0.27);
+}

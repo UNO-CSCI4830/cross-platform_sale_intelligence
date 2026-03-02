@@ -1,0 +1,151 @@
+/* ── LoginForm.css ───────────────────────────────────────────────────────
+   Full-screen login / signup page.
+   ──────────────────────────────────────────────────────────────────────── */
+
+.login-shell {
+  min-height: 100vh;
+  background: #0f0f0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Georgia", serif;
+  color: #f0ede8;
+}
+
+.login-panel {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 36px 32px;
+  width: 360px;
+}
+
+/* Brand header */
+.login-panel__brand {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-panel__brand-name {
+  margin: 0;
+  font-size: 14px;
+  color: #f0a500;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.login-panel__brand-sub {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #7a7a7a;
+}
+
+/* Tab switcher */
+.login-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  color: #7a7a7a;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.login-tab:hover {
+  color: #f0ede8;
+}
+
+.login-tab--active {
+  background: rgba(240, 165, 0, 0.13);
+  color: #f0a500;
+}
+
+/* Fields */
+.login-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-field label {
+  font-size: 11px;
+  color: #7a7a7a;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.login-field input {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 5px;
+  padding: 9px 11px;
+  color: #f0ede8;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.login-field input:focus {
+  border-color: #f0a500;
+}
+
+/* Error message */
+.login-error {
+  font-size: 12px;
+  color: #e05c5c;
+  margin: 0;
+  padding: 8px 10px;
+  background: rgba(224, 92, 92, 0.08);
+  border: 1px solid rgba(224, 92, 92, 0.2);
+  border-radius: 5px;
+}
+
+/* Submit button */
+.login-submit {
+  width: 100%;
+  margin-top: 6px;
+  background: #f0a500;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.login-submit:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.login-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
