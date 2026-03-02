@@ -58,7 +58,7 @@ export function LoginForm({ onLogin }) {
 
         {/* Brand */}
         <div className="login-panel__brand">
-          <p className="login-panel__brand-name">ResaleIQ</p>
+          <p className="login-panel__brand-name">Cross-Platform Resale Intelligence</p>
           <p className="login-panel__brand-sub">Multi-Platform Dashboard</p>
         </div>
 
