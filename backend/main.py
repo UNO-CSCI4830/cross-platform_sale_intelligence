@@ -160,8 +160,5 @@ def add_test_listing(db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Test listing added"}
 
-@app.get("/") # This is a decorator for HTML GET. Just "/" is the base page
-def root():
-    return {"Hello": "World"}
 
 
