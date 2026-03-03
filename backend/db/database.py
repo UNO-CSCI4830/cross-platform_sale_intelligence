@@ -10,8 +10,8 @@ Base = declarative_base()
 
 # Dependency for FastAPI
 def get_db():
-    db = Sessionlocal()
+    db = Sessionlocal() # Every HTTP request gets it own session
     try:
         yield db
     finally:
-        db.close()
+        db.close() #close session regardless of result
