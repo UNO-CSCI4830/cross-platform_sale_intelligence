@@ -10,7 +10,7 @@ import { COLORS, PLATFORMS, LISTINGS } from "../../constants/data";
 //   activePlatform — currently selected sidebar filter
 //   showForm       — boolean, whether the Add Listing modal is open
 //   editingListing — listing object being edited, or null
-export default function Dashboard() {
+export default function Dashboard({ user, onLogout }) {
   const [listings,        setListings]        = useState(LISTINGS);
   const [activePlatform,  setActivePlatform]  = useState("All Platforms");
   const [showForm,        setShowForm]        = useState(false);
@@ -69,10 +69,23 @@ export default function Dashboard() {
           );
         })}
 
-        {/* ── To be edited later ── */}
         <div className="sidebar__footer">
-          <p>Logged in as User</p>
+          <p title={user}>{user}</p>
           <p>v0.1 · Baseline Build</p>
+          <a
+            href="https://forms.gle/uJjbzj26iHBpLDad9"
+            target="_blank"
+            rel="noreferrer"
+            className="sidebar__logout"
+            style={{ display: "inline-block", marginBottom: "6px", textDecoration: "none" }}
+          >
+            ⚐ Report a Bug
+          </a>
+          {onLogout && (
+            <button className="sidebar__logout" onClick={onLogout}>
+              Log out
+            </button>
+          )}
         </div>
       </aside>
 

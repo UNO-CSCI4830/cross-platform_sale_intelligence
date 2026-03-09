@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import "./ListingForm.css";
-import { PLATFORMS, CONDITIONS, CATEGORIES } from "../../constants/data";
+import { PLATFORMS, CONDITIONS, CATEGORIES, estimateShipping } from "../../constants/data";
 
 // ── Field ────────────────────────────────────────────────────────
-function Field({ label, fieldKey, value, onChange, type = "text", options = null }) {
+function Field({ label, fieldKey, value, onChange, type = "text", options = null, placeholder = "" }) {
   return (
     <div className="form-field">
       <label>{label}</label>
@@ -15,6 +15,7 @@ function Field({ label, fieldKey, value, onChange, type = "text", options = null
         <input
           type={type}
           value={value}
+          placeholder={placeholder}
           onChange={(e) => onChange(fieldKey, e.target.value)}
         />
       )}
@@ -22,28 +23,99 @@ function Field({ label, fieldKey, value, onChange, type = "text", options = null
   );
 }
 
+// ── ImageUpload ───────────────────────────────────────────────────
+function ImageUpload({ value, onChange }) {
+  const inputRef = useRef(null);
+
+  const readFile = (file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => onChange("imageUrl", e.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="form-image-section">
+      <div
+        className="image-upload"
+        onClick={() => inputRef.current.click()}
+      >
+        {value ? (
+          <img src={value} alt="listing" className="image-upload__preview" />
+        ) : (
+          <div className="image-upload__placeholder">
+            <span className="image-upload__icon">+</span>
+            <span className="image-upload__hint">Click to upload a photo</span>
+            <span className="image-upload__sub">JPG · PNG · WEBP</span>
+          </div>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={(e) => readFile(e.target.files[0])}
+        />
+      </div>
+      {value && (
+        <button
+          className="image-upload__remove"
+          onClick={() => onChange("imageUrl", "")}
+        >
+          Remove photo
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── ShippingEstimate ──────────────────────────────────────────────
+function ShippingEstimate({ weightLbs }) {
+  const parsed = parseFloat(weightLbs);
+  const tier = estimateShipping(parsed);
+
+  if (!tier) {
+    return (
+      <div className="shipping-estimate shipping-estimate--empty">
+        <span className="shipping-estimate__label">Est. Shipping</span>
+        <span className="shipping-estimate__empty-hint">Enter weight above</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="shipping-estimate">
+      <span className="shipping-estimate__label">Est. Shipping</span>
+      <div className="shipping-estimate__rates">
+        <span className="shipping-estimate__carrier">
+          USPS <strong>${tier.usps.toFixed(2)}</strong>
+        </span>
+        <span className="shipping-estimate__divider">·</span>
+        <span className="shipping-estimate__carrier">
+          UPS <strong>${tier.ups.toFixed(2)}</strong>
+        </span>
+      </div>
+      <span className="shipping-estimate__tier">{tier.label}</span>
+    </div>
+  );
+}
+
 // ── AddListingForm ────────────────────────────────────────────────────────
-// Modal form for adding a new listing.
-// Props:
-//   onAdd   — callback(listing) called with the new listing object on submit
-//   onClose — callback() called when the modal should close 
-//   onDelete   — optional callback(id) called when the listing is deleted
-//   initial    — optional existing listing object (triggers "edit" mode)
 export function AddListingForm({ onAdd, onClose, onDelete, initial }) {
   const isEditing = !!initial;
 
   const [form, setForm] = useState(
     initial ?? {
-      platform:  "Poshmark",
-      title:     "",
-      category:  "Tops",
-      size:      "",
-      condition: "Good",
-      price:     "",
-      notes:     "",
-      stains:    false,
-      damage:    false,
-      fading:    false,
+      platform:      "Poshmark",
+      title:         "",
+      category:      "Apparel",
+      categoryOther: "",
+      size:          "",
+      condition:     "Good",
+      price:         "",
+      weightLbs:     "",
+      notes:         "",
+      imageUrl:      "",
     }
   );
 
@@ -52,10 +124,17 @@ export function AddListingForm({ onAdd, onClose, onDelete, initial }) {
 
   const handleSubmit = () => {
     if (!form.title.trim() || !form.price) return;
+    const finalCategory =
+      form.category === "Other" && form.categoryOther.trim()
+        ? "Other: " + form.categoryOther.trim()
+        : form.category;
+
     onAdd({
       ...form,
-      id:    isEditing ? form.id : Date.now(),
-      price: parseFloat(form.price),
+      category:  finalCategory,
+      id:        isEditing ? form.id : Date.now(),
+      price:     parseFloat(form.price),
+      weightLbs: form.weightLbs ? parseFloat(form.weightLbs) : null,
     });
     onClose();
   };
@@ -69,24 +148,51 @@ export function AddListingForm({ onAdd, onClose, onDelete, initial }) {
     <div className="form-overlay">
       <div className="form-panel">
 
-        {/* Header */}
         <div className="form-panel__header">
           <h3 className="form-panel__title">{isEditing ? "Edit Listing" : "New Listing"}</h3>
-          <button className="form-panel__close" onClick={onClose}>✕</button>
+          <button className="form-panel__close" onClick={onClose}>X</button>
         </div>
 
-        {/* Form fields */}
+        <ImageUpload value={form.imageUrl} onChange={handleChange} />
+
         <div className="form-grid">
           <Field label="Platform"  fieldKey="platform"  value={form.platform}  onChange={handleChange} options={PLATFORMS.slice(1)} />
           <Field label="Category"  fieldKey="category"  value={form.category}  onChange={handleChange} options={CATEGORIES} />
+
+          {form.category === "Other" && (
+            <div className="form-grid--full">
+              <Field
+                label="Describe Category"
+                fieldKey="categoryOther"
+                value={form.categoryOther}
+                onChange={handleChange}
+                placeholder="e.g. Musical Instruments, Sports Gear..."
+              />
+            </div>
+          )}
+
           <div className="form-grid--full">
-            <Field label="Title"   fieldKey="title"     value={form.title}     onChange={handleChange} />
+            <Field label="Title" fieldKey="title" value={form.title} onChange={handleChange} />
           </div>
+
           <Field label="Size"      fieldKey="size"      value={form.size}      onChange={handleChange} />
           <Field label="Condition" fieldKey="condition" value={form.condition} onChange={handleChange} options={CONDITIONS} />
           <Field label="Price ($)" fieldKey="price"     value={form.price}     onChange={handleChange} type="number" />
 
-          {/* Notes — full width, textarea */}
+          <div className="form-field">
+            <label>Item Weight (lbs)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={form.weightLbs}
+              placeholder="e.g. 1.5"
+              onChange={(e) => handleChange("weightLbs", e.target.value)}
+            />
+          </div>
+
+          <ShippingEstimate weightLbs={form.weightLbs} />
+
           <div className="form-field form-grid--full">
             <label>Notes</label>
             <textarea
@@ -96,7 +202,6 @@ export function AddListingForm({ onAdd, onClose, onDelete, initial }) {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="form-actions">
           <button className="btn-primary" onClick={handleSubmit}>
             {isEditing ? "Save Changes" : "Add Listing"}

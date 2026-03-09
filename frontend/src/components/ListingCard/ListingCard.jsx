@@ -15,6 +15,17 @@ export function GridCard({ listing, onClick }) {
       style={{ borderTop: `3px solid ${pc}` }}
       onClick={onClick}
     >
+      {/* Image area — only rendered when imageUrl is present */}
+      {listing.imageUrl && (
+        <div className="grid-card__image-wrap">
+          <img
+            src={listing.imageUrl}
+            alt={listing.title}
+            className="grid-card__image"
+          />
+        </div>
+      )}
+
       <div className="grid-card__header">
         <Badge label={listing.platform} color={pc} />
       </div>
@@ -31,6 +42,9 @@ export function GridCard({ listing, onClick }) {
 
       <div className="grid-card__footer">
         <span className="grid-card__price">${listing.price}</span>
+        {listing.weightLbs && (
+          <span className="grid-card__weight">{listing.weightLbs} lb{listing.weightLbs !== 1 ? "s" : ""}</span>
+        )}
       </div>
 
       {listing.notes && (
