@@ -72,6 +72,15 @@ export default function Dashboard({ user, onLogout }) {
         <div className="sidebar__footer">
           <p title={user}>{user}</p>
           <p>v0.1 · Baseline Build</p>
+          <a
+            href="https://forms.gle/uJjbzj26iHBpLDad9"
+            target="_blank"
+            rel="noreferrer"
+            className="sidebar__logout"
+            style={{ display: "inline-block", marginBottom: "6px", textDecoration: "none" }}
+          >
+            ⚐ Report a Bug
+          </a>
           {onLogout && (
             <button className="sidebar__logout" onClick={onLogout}>
               Log out
