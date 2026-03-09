@@ -3,42 +3,73 @@ import "./LoginForm.css";
 
 const API_BASE = "http://localhost:8000";
 
+// ── Dummy credentials ─────────────────────────────────────────────────────
+const DUMMY_EMAIL    = "dummy@email.com";
+const DUMMY_PASSWORD = "password";
+
 // ── LoginForm ─────────────────────────────────────────────────────────────
 // Full-screen login / sign-up page.
 // Props:
 //   onLogin — callback(email) called with the user's email on success
 export function LoginForm({ onLogin }) {
   const [mode,     setMode]     = useState("login");   // "login" | "signup"
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [error,    setError]    = useState("");
-  const [loading,  setLoading]  = useState(false);
+  const [firstName,       setFirstName]       = useState("");
+  const [lastName,        setLastName]        = useState("");
+  const [email,           setEmail]           = useState("");
+  const [password,        setPassword]        = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error,           setError]           = useState("");
+  const [loading,         setLoading]         = useState(false);
 
   const handleSubmit = async () => {
     setError("");
-    if (!email.trim() || !password) {
-      setError("Email and password are required.");
+
+    if (mode === "signup") {
+      if (!firstName.trim() || !lastName.trim()) {
+        setError("First and last name are required.");
+        return;
+      }
+      if (!email.trim() || !password) {
+        setError("Email and password are required.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+    } else {
+      if (!email.trim() || !password) {
+        setError("Email and password are required.");
+        return;
+      }
+    }
+
+    // ── Dummy bypass (remove before shipping) ──────────────────────────
+    if (email === DUMMY_EMAIL && password === DUMMY_PASSWORD) {
+      onLogin(DUMMY_EMAIL);
       return;
     }
 
     setLoading(true);
     try {
       const endpoint = mode === "login" ? "/login" : "/signup";
+      const body = mode === "login"
+        ? { email, password }
+        : { first_name: firstName, last_name: lastName, email, password };
+
       const res = await fetch(`${API_BASE}${endpoint}`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ email, password }),
+        body:    JSON.stringify(body),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        // FastAPI raises HTTPException with a `detail` field
         setError(data.detail || "Something went wrong.");
         return;
       }
 
-      // data.email comes back from both /signup and /login responses
       onLogin(data.email);
     } catch (err) {
       setError("Could not reach the server. Is the backend running?");
@@ -47,9 +78,19 @@ export function LoginForm({ onLogin }) {
     }
   };
 
-  // Allow submitting with Enter key
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSubmit();
+  };
+
+  // Clear all fields when switching tabs
+  const switchMode = (newMode) => {
+    setMode(newMode);
+    setError("");
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
   };
 
   return (
@@ -66,13 +107,13 @@ export function LoginForm({ onLogin }) {
         <div className="login-tabs">
           <button
             className={`login-tab ${mode === "login"  ? "login-tab--active" : ""}`}
-            onClick={() => { setMode("login");  setError(""); }}
+            onClick={() => switchMode("login")}
           >
             Log In
           </button>
           <button
             className={`login-tab ${mode === "signup" ? "login-tab--active" : ""}`}
-            onClick={() => { setMode("signup"); setError(""); }}
+            onClick={() => switchMode("signup")}
           >
             Sign Up
           </button>
@@ -80,6 +121,33 @@ export function LoginForm({ onLogin }) {
 
         {/* Fields */}
         <div className="login-fields">
+
+          {/* Signup-only: first + last name side by side */}
+          {mode === "signup" && (
+            <div style={{ display: "flex", gap: "10px" }}>
+              <div className="login-field" style={{ flex: 1 }}>
+                <label>First Name</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Jane"
+                />
+              </div>
+              <div className="login-field" style={{ flex: 1 }}>
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Smith"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="login-field">
             <label>Email</label>
             <input
@@ -101,6 +169,20 @@ export function LoginForm({ onLogin }) {
               placeholder="••••••••"
             />
           </div>
+
+          {/* Signup-only: confirm password */}
+          {mode === "signup" && (
+            <div className="login-field">
+              <label>Confirm Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="••••••••"
+              />
+            </div>
+          )}
 
           {error && <p className="login-error">{error}</p>}
 
