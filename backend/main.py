@@ -1,14 +1,23 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv() #Load environment variables
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from backend.db.database import Base, engine, get_db
-from backend.db.models import User, Issue, Listing
-from backend.services.user_service import create_user, authenticate_user
+from core.security import get_current_user, create_access_token
+from db.database import Base, engine, get_db
+from db.models import User, Issue, Listing
+from services.user_service import create_user, authenticate_user
+from services.platform_service import PLATFORM_CONFIGS, save_linked_account
+import httpx
 
-Base.metadata.create_all(bind=engine) # Create tables
+
+
+Base.metadata.create_all(bind=engine) # Create tables, if they do not already exist
 
 # FastAPI app instance
 app = FastAPI()
@@ -75,7 +84,13 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     authenticated_user = authenticate_user(user.email, user.password, db) #authenticate_user returns the user, returns the user object
     if not authenticated_user: #user fails to login, authenticate_user returns None, making this if statement true and returns an error
         raise HTTPException(status_code = 400, detail = "Invalid credentials")
-    return {"id": authenticated_user.id, "email": authenticated_user.email}
+    token = create_access_token(authenticated_user.id)
+    return{
+            "id": authenticated_user.id,
+            "email": authenticated_user.email,
+            "access_token": token,
+            "token_type": "bearer"
+        }
 
 @app.put("/users/{user_id}")
 def update_user_profile(
@@ -145,6 +160,46 @@ def list_issues(db: Session = Depends(get_db)):
         }
         for i in issues
     ]
+
+# Connect External Resale Platforms (FR4)
+@app.get("/auth/{platform}/connect")
+async def connect_platform(platform: str, current_user=Depends(get_current_user)):
+    params = {
+        "client_id": PLATFORM_CONFIGS[platform]["client_id"],
+        "redirect_uri": f"{os.getenv('REDIRECT_BASE_URL')}/auth/{platform}/callback", #IMPORTANT: This exact url must be registered with the service and then updated when hosting
+        "response_type": "code",
+        "scope": "https://api.ebay.com/oauth/api_scope/sell.inventory", #Tells ebay we want to access listings
+        "state": current_user.id  # pass user ID so we know who to link on callback
+    }
+    auth_url = PLATFORM_CONFIGS[platform]["auth_url"]
+    return RedirectResponse(url=f"{auth_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}") #builds the url using the parameters above, also where the user is sent to login
+
+@app.get("/auth/{platform}/callback")
+async def platform_callback(platform: str, code: str, state: str, db=Depends(get_db)):
+    config = PLATFORM_CONFIGS[platform]
+    
+    # Exchange the code eBay gave us for actual tokens
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            config["token_url"], #Server call
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": f"{os.getenv('REDIRECT_BASE_URL')}/auth/{platform}/callback",
+            },
+            auth=(config["client_id"], config["client_secret"])
+        )
+        tokens = response.json()
+    
+    # Save tokens to DB
+    await save_linked_account(
+        user_id=int(state),
+        platform=platform,
+        tokens=tokens,
+        db=db
+    )
+    
+    return {"status": "linked"}
 
 # Temporary test data for dashboard development
 @app.get("/test/add-listing")
