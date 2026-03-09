@@ -44,7 +44,7 @@ export function LoginForm({ onLogin }) {
       }
     }
 
-    // ── Dummy bypass (remove before shipping) ──────────────────────────
+    // ── Dummy bypass ───────────────────────────────────────────────────
     if (email === DUMMY_EMAIL && password === DUMMY_PASSWORD) {
       onLogin(DUMMY_EMAIL);
       return;
@@ -132,7 +132,7 @@ export function LoginForm({ onLogin }) {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="John"
+                  placeholder="Jane"
                 />
               </div>
               <div className="login-field" style={{ flex: 1 }}>
