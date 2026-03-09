@@ -6,8 +6,8 @@ def create_user(email, password, db):
     """
     Creates a user by adding it to a sqlite table
     """
-    hashed = hash_password(password)
-    user = User(email=email, password_hash=hashed) #store user email and password hash
+    hashed = hash_pwd(password)
+    user = User(email=email, password_hash=hashed)  # store user email and password hash
     db.add(user)
     db.commit()
     db.refresh(user)

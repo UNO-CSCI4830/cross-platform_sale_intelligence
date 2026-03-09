@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from backend.db.database import Base, engine, get_db
-from backend.db.models import User, Issue, Listing
+from backend.db.models import User, Issue, Listing, PlatformConnection
 from backend.services.user_service import create_user, authenticate_user
 
 Base.metadata.create_all(bind=engine) # Create tables
@@ -42,6 +42,30 @@ class ListingResponse(BaseModel):
     price: int
     condition: str
     platform: str
+    status: str
+
+    class Config:
+        from_attributes = True
+
+# FR4: Input model for connecting an external platform
+class PlatformConnectRequest(BaseModel):
+    user_id: int
+    platform_name: str
+    external_account_id: str | None = None
+
+
+# FR4: Input model for disconnecting an external platform
+class PlatformDisconnectRequest(BaseModel):
+    user_id: int
+    platform_name: str
+
+
+# FR4: Response model for connected platform data
+class PlatformConnectionOut(BaseModel):
+    id: int
+    user_id: int
+    platform_name: str
+    external_account_id: str | None
     status: str
 
     class Config:
@@ -145,6 +169,84 @@ def list_issues(db: Session = Depends(get_db)):
         }
         for i in issues
     ]
+
+# FR4: Connect an external resale platform to a user account
+@app.post("/platforms/connect")
+def connect_platform(
+    connection: PlatformConnectRequest,
+    db: Session = Depends(get_db)
+):
+    # Check that the user exists in our system
+    user = db.query(User).filter(User.id == connection.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prevent duplicate active connections for the same platform
+    existing = (
+        db.query(PlatformConnection)
+        .filter(
+            PlatformConnection.user_id == connection.user_id,
+            PlatformConnection.platform_name == connection.platform_name,
+            PlatformConnection.status == "connected"
+        )
+        .first()
+    )
+
+    if existing:
+        raise HTTPException(status_code=400, detail="Platform already connected")
+
+    new_connection = PlatformConnection(
+        user_id=connection.user_id,
+        platform_name=connection.platform_name,
+        external_account_id=connection.external_account_id,
+        status="connected"
+    )
+
+    db.add(new_connection)
+    db.commit()
+    db.refresh(new_connection)
+
+    return {"message": "Platform connected successfully", "connection_id": new_connection.id}
+
+
+# FR4: Get all connected platforms for a user
+@app.get("/platforms/{user_id}", response_model=list[PlatformConnectionOut])
+def get_connected_platforms(user_id: int, db: Session = Depends(get_db)):
+    connections = (
+        db.query(PlatformConnection)
+        .filter(
+            PlatformConnection.user_id == user_id,
+            PlatformConnection.status == "connected"
+        )
+        .all()
+    )
+
+    return connections
+
+
+# FR4: Disconnect a platform from a user account
+@app.delete("/platforms/disconnect")
+def disconnect_platform(
+    request: PlatformDisconnectRequest,
+    db: Session = Depends(get_db)
+):
+    connection = (
+        db.query(PlatformConnection)
+        .filter(
+            PlatformConnection.user_id == request.user_id,
+            PlatformConnection.platform_name == request.platform_name,
+            PlatformConnection.status == "connected"
+        )
+        .first()
+    )
+
+    if not connection:
+        raise HTTPException(status_code=404, detail="Connected platform not found")
+
+    connection.status = "disconnected"
+    db.commit()
+
+    return {"message": "Platform disconnected successfully"}
 
 # Temporary test data for dashboard development
 @app.get("/test/add-listing")
