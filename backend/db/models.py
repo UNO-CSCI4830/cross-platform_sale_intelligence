@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from database import Base
+from backend.db.database import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -16,6 +16,7 @@ class User(Base):
 # Connect External Resale Platforms (FR4)
 #Side note: Using Oauth2.0 we can only access Ebay and Depop, we can use Graph API for FaceBook, but Mercari and Poshmark have no public API
 class LinkedAccount(Base):
+    __tablename__ = "linked_accounts"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     platform = Column(String, nullable=False)
@@ -24,7 +25,7 @@ class LinkedAccount(Base):
     token_expiry = Column(DateTime, nullable=True)
     platform_user_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    user = relationship("User", back_populates="linked_accoounts")
+    user = relationship("User", back_populates="linked_accounts")
 
 # Represents a resale listing shown on the dashboard (FR5)
 class Listing(Base):

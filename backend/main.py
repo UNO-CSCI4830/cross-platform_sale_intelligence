@@ -8,11 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from core.security import get_current_user, create_access_token
-from db.database import Base, engine, get_db
-from db.models import User, Issue, Listing
-from services.user_service import create_user, authenticate_user
-from services.platform_service import PLATFORM_CONFIGS, save_linked_account
+from backend.core.security import get_current_user, create_access_token
+from backend.db.database import Base, engine, get_db
+from backend.db.models import User, Issue, Listing
+from backend.services.user_service import create_user, authenticate_user
+from backend.services.platform_service import PLATFORM_CONFIGS, save_linked_account
 import httpx
 
 

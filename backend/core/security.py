@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.database import get_db
-from db.models import User
+from backend.db.database import get_db
+from backend.db.models import User
 from jose import jwt, JWTError
 import os
 from cryptography.fernet import Fernet

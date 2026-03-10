@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException
-from core.security import encrypt_token, decrypt_token
+from backend.core.security import encrypt_token, decrypt_token
 import httpx
 import os
 
-from db.models import LinkedAccount
+from backend.db.models import LinkedAccount
 
 PLATFORM_CONFIGS = {
     "ebay": {
