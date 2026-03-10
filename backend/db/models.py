@@ -59,3 +59,23 @@ class Issue(Base):
 
     # Timestamp for when the issue was submitted
     created_at = Column(DateTime, default=datetime.utcnow)
+
+# FR4: Stores external resale platforms linked to a user account
+class PlatformConnection(Base):
+    __tablename__ = "platform_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # User in our system
+    user_id = Column(Integer, nullable=False)
+
+    # External platform name such as eBay, Depop, or Poshmark
+    platform_name = Column(String, nullable=False)
+
+    # External account identifier or username from that platform
+    external_account_id = Column(String, nullable=True)
+
+    # Tracks whether the platform is currently connected
+    status = Column(String, default="connected", nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)

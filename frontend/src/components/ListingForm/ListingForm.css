@@ -1,0 +1,307 @@
+/* ── ListingForm.css ─────────────────────────────────────────────────────
+   Styles for the Add Listing modal overlay and form fields.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* Modal overlay — covers the full screen */
+.form-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal panel */
+.form-panel {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 28px;
+  width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Modal header row */
+.form-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.form-panel__title {
+  margin: 0;
+  color: #f0ede8;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.form-panel__close {
+  background: none;
+  border: none;
+  color: #7a7a7a;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+}
+
+.form-panel__close:hover {
+  color: #f0ede8;
+}
+
+/* Grid layout for the fields */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-grid--full {
+  grid-column: 1 / -1;
+}
+
+/* Individual field wrapper */
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  font-size: 11px;
+  color: #7a7a7a;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 5px;
+  padding: 8px 10px;
+  color: #f0ede8;
+  font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: #f0a500;
+}
+
+.form-field textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.form-field select {
+  cursor: pointer;
+}
+
+/* Action buttons row */
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.btn-primary {
+  flex: 1;
+  background: #f0a500;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  flex: 1;
+  background: #1c1c1c;
+  color: #7a7a7a;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.btn-secondary:hover {
+  color: #f0ede8;
+}
+
+
+.btn-danger {
+  flex: 1;
+  background: #2a1010;
+  color: #e05c5c;
+  border: 1px solid #5c2020;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-danger:hover {
+  background: #3a1515;
+}
+
+/* ── Image Upload Zone ────────────────────────────────────────────────── */
+.form-image-section {
+  margin-bottom: 18px;
+}
+
+.form-section-label {
+  display: block;
+  font-size: 11px;
+  color: #7a7a7a;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.image-upload {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  border: 1.5px dashed #2a2a2a;
+  border-radius: 8px;
+  background: #0f0f0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.image-upload:hover {
+  border-color: #444;
+}
+
+.image-upload__preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.image-upload__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.image-upload__icon {
+  font-size: 20px;
+  color: #444;
+}
+
+.image-upload__hint {
+  font-size: 12px;
+  color: #7a7a7a;
+}
+
+.image-upload__sub {
+  font-size: 10px;
+  color: #444;
+}
+
+/* Remove button sits below the upload zone */
+.image-upload__remove {
+  display: block;
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #e05c5c;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+}
+
+.image-upload__remove:hover {
+  text-decoration: underline;
+}
+
+/* ── Shipping Estimate ────────────────────────────────────────────────── */
+.shipping-estimate {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 5px;
+  padding: 8px 10px;
+  min-height: 56px;
+}
+
+.shipping-estimate--empty {
+  opacity: 0.5;
+}
+
+.shipping-estimate__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #7a7a7a;
+}
+
+.shipping-estimate__rates {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #f0ede8;
+}
+
+.shipping-estimate__rates strong {
+  color: #f0a500;
+}
+
+.shipping-estimate__divider {
+  color: #444;
+}
+
+.shipping-estimate__carrier {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.shipping-estimate__tier {
+  font-size: 10px;
+  color: #444;
+}
+
+.shipping-estimate__empty-hint {
+  font-size: 11px;
+  color: #444;
+  font-style: italic;
+}
