@@ -69,5 +69,55 @@ This will create:
 
 ---
 
-The database is now ready for ingestion logic.
+### 5. Running Queries
 
+
+This folder also includes a queries.sql file containing commonly used SQL queries for exploring the database and generating pricing analytics.
+
+To run the queries:
+1. Select the comps_db database
+2. Click Query Tool
+3. Open queries.sql from this folder
+4. Execute the script
+
+These queries allow you to:
+- View stored search queries
+- View listing data returned from the eBay API
+- Calculate average market prices
+- Generate suggested listing prices
+- Estimate shipping weight using USPS guidelines
+- Calculate total cost including shipping
+
+---
+
+### 6. Pricing Table
+
+
+The main analytics query generates a pricing table for each listing.
+
+The table calculates:
+
+current_price — listing price returned from eBay
+
+avg_price — average market price for that search term
+
+suggested_listing_price — average price plus a 15% markup
+
+estimated_weight_lbs — estimated shipping weight
+
+estimated_usps_shipping — estimated shipping cost
+
+total_cost_with_shipping — listing price plus estimated shipping
+
+The table output includes the following fields:
+- keywords
+- title
+- current_price
+- avg_price
+- suggested_listing_price
+- estimated_weight_lbs
+- estimated_usps_shipping
+- total_cost_with_shipping
+- condition
+- seller_username
+- item_url
