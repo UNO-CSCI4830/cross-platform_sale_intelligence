@@ -49,9 +49,8 @@ In pgAdmin:
 
 1. Right-click **Databases**
 2. Click **Create → Database**
-3. Name it: comps_db
-
-Click Save.
+3. Enter the database name: `comps_db`
+4. Click **Save**
 
 ---
 
@@ -59,12 +58,13 @@ Click Save.
 
 1. Select the `comps_db` database
 2. Click **Query Tool**
-3. Open `schema.sql` from this folder
-4. Execute the script
+3. Open the file `schema.sql` from this folder
+4. Click **Execute**
 
-This will create:
-- search_query table
-- listing_snapshot table
+This will create the following database objects:
+
+- `search_query` table
+- `listing_snapshot` table
 - required indexes
 
 ---
