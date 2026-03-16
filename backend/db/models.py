@@ -5,10 +5,12 @@ from backend.db.database import Base
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index = True, nullable = False) 
+    id = Column(Integer, primary_key = True, index = True)
+    email = Column(String, unique = True, index = True, nullable = False) 
     '''index means faster lookup, longer insertion/updates,
     nullable means it is allowed to have a null/none value, in this case it is not allowed, becuase we need an email'''
+    first_name = Column(String, unique = False, index = True, nullable = False)
+    last_name = Column(String, unique = False, index = True, nullable = False)
     password_hash = Column(String, nullable = False)
     created_at = Column(DateTime, default=datetime.utcnow) # Coordinated Universal Time is 6 hours ahead of CST.
     linked_accounts = relationship("LinkedAccount", back_populates= "user") 
@@ -61,7 +63,7 @@ class Issue(Base):
     # Timestamp for when the issue was submitted
     created_at = Column(DateTime, default=datetime.utcnow)
 
-# FR4: Stores external resale platforms linked to a user account
+"""# FR4: Stores external resale platforms linked to a user account
 class PlatformConnection(Base):
     __tablename__ = "platform_connections"
 
@@ -80,3 +82,4 @@ class PlatformConnection(Base):
     status = Column(String, default="connected", nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+"""

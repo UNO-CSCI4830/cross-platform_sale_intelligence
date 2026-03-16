@@ -34,6 +34,8 @@ app.add_middleware(
 #Pydantic schemas
 class UserCreate(BaseModel):
     email: str
+    first_name: str
+    last_name: str
     password: str
 
 class UserLogin(BaseModel):
@@ -99,7 +101,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user: #If this user already exists
         raise HTTPException(status_code = 400, detail = "Email already registered")
-    created_user = create_user(user.email, user.password, db)
+    created_user = create_user(user.email,user.first_name, user.last_name, user.password, db)
     return {"id": created_user.id, "email": created_user.email}
 
 #Route for logging in
@@ -115,6 +117,12 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             "access_token": token,
             "token_type": "bearer"
         }
+
+@app.post("/logout")
+async def logout():
+    return {"message": "Logged out sucessfully"} #Option 1 delete token stored on user's browser, which is done from frontend. 
+#Option 2 create another column in the database that timestamps when the user logs out and check if the token is older than the logout, if true do not accept token
+
 
 @app.put("/users/{user_id}")
 def update_user_profile(
