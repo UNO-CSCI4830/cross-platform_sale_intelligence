@@ -70,7 +70,7 @@ export function LoginForm({ onLogin }) {
         return;
       }
 
-      onLogin(data.email);
+      onLogin(data.email, data.id, data.access_token);
     } catch (err) {
       setError("Could not reach the server. Is the backend running?");
     } finally {
