@@ -8,9 +8,9 @@ import { LoginForm } from "./components/LoginForm/LoginForm";
 // - Once logged in, pass the email down to Dashboard so it can
 //   display the username in the sidebar footer.
 function App() {
-  const [user, setUser] = useState(null); // null = logged out, string = email
+  const [user, setUser] = useState(null); // null = logged out, { email, id, token } when logged in
+  const handleLogin = (email, id, token) => setUser({ email, id, token });
 
-  const handleLogin  = (email) => setUser(email);
   const handleLogout = ()      => setUser(null);
 
   if (!user) {
