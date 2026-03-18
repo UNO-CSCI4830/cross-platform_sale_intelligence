@@ -17,7 +17,7 @@ function App() {
     return <LoginForm onLogin={handleLogin} />;
   }
 
-  return <Dashboard user={user} onLogout={handleLogout} />;
+  return <Dashboard user={user.email} onLogout={handleLogout} />;
 }
 
 export default App;
