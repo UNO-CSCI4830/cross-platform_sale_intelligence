@@ -2,12 +2,15 @@ from sqlalchemy.orm import Session
 from backend.db.models import User
 from backend.core.security import hash_password, verify_password
 
-def create_user(email, password, db):
+def create_user(email, first_name, last_name, password, db):
     """
     Creates a user by adding it to a sqlite table
     """
     hashed = hash_password(password)
-    user = User(email=email, password_hash=hashed)  # store user email and password hash
+    user = User(email=email, 
+                first_name=first_name, 
+                last_name=last_name,
+                password_hash=hashed)  # store user email and password hash
     db.add(user)
     db.commit()
     db.refresh(user)
