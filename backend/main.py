@@ -120,8 +120,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
 @app.post("/logout")
 async def logout():
-    return {"message": "Logged out sucessfully"} #Option 1 delete token stored on user's browser, which is done from frontend. 
-#Option 2 create another column in the database that timestamps when the user logs out and check if the token is older than the logout, if true do not accept token
+    return {"message": "Logged out sucessfully"} #Option 1 delete token stored on user's browser, which is done from frontend.
 
 
 @app.put("/users/{user_id}")

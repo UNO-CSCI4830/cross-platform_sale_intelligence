@@ -31,9 +31,8 @@ def create_access_token(user_id:int) -> str:
     """Create a token that shows 3rd party platform that the user is logged in to our app"""
     payload = {
         "sub": str(user_id), # Who is logged in
-        #"role": role (do we want/need different access levels? Or do all users have same permissions)
         "exp": datetime.utcnow() + timedelta(hours=24) #time until token expires
-        #"iat": {some time} (do we want tokens to expire after some event, such as a password change?)
+        #"iat": {some time} (do we want tokens to expire after some event, such as a password change?) #sprint2 task
     }
     return jwt.encode(payload, os.getenv("SECRET_KEY"), algorithm="HS256") #jose 
 
