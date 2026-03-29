@@ -230,7 +230,7 @@ async def platform_callback(platform: str, code: str, state: str, db=Depends(get
         db=db
     )
     
-    return {"status": "linked"}
+    return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}/Dashboard") # Url may be incorrect, need confirmation on dashboard name
 # FR4: Connect an external resale platform to a user account
 """
 @app.post("/platforms/connect")
