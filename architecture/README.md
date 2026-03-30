@@ -1,6 +1,7 @@
 # Cross-platform Sale Intelligence Architecture
 
 ## Overview
+
 This file contains the description of the software architecture from three aspects - application architecture, structural design, and creational design. The system contains frontend, backend, and database component to create a comprehensive and user-friendly selling platform. 
 ---
 
