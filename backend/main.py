@@ -15,8 +15,6 @@ from backend.services.user_service import create_user, authenticate_user
 from backend.services.platform_service import PLATFORM_CONFIGS, save_linked_account
 import httpx
 
-
-
 Base.metadata.create_all(bind=engine) # Create tables, if they do not already exist
 
 # FastAPI app instance
@@ -46,6 +44,19 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     email: str  # New email address for the user
 
+class ListingCreate(BaseModel):
+    user_id: int
+    title: str
+    price: float
+    condition: str
+    platform: str
+    category: str | None = None
+    size: str | None = None
+    notes: str | None = None
+    weight_lbs: float | None = None
+    image_url: str | None = None
+    status: str = "active"
+
 # Data returned to the dashboard for each listing
 class ListingResponse(BaseModel):
     id: int
@@ -53,6 +64,11 @@ class ListingResponse(BaseModel):
     price: int
     condition: str
     platform: str
+    category: str | None = None
+    size: str | None = None
+    notes: str | None = None
+    weight_lbs: float | None = None
+    image_url: str | None = None
     status: str
 
     class Config:
@@ -102,7 +118,13 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     if db_user: #If this user already exists
         raise HTTPException(status_code = 400, detail = "Email already registered")
     created_user = create_user(user.email,user.first_name, user.last_name, user.password, db)
-    return {"id": created_user.id, "email": created_user.email}
+    token = create_access_token(created_user.id)
+    return {
+        "id": created_user.id,
+        "email": created_user.email,
+        "access_token": token,
+        "token_type": "bearer",
+    }
 
 #Route for logging in
 @app.post("/login")
@@ -156,6 +178,54 @@ def get_user_listings(user_id: int, db: Session = Depends(get_db)):
     )
 
     return listings
+
+@app.post("/listings", response_model=ListingResponse)
+def create_listing(listing: ListingCreate, db: Session = Depends(get_db)):
+    new_listing = Listing(
+        user_id    = listing.user_id,
+        title      = listing.title,
+        price      = listing.price,
+        condition  = listing.condition,
+        platform   = listing.platform,
+        category   = listing.category,
+        size       = listing.size,
+        notes      = listing.notes,
+        weight_lbs = listing.weight_lbs,
+        image_url  = listing.image_url,
+        status     = listing.status,
+    )
+    db.add(new_listing)
+    db.commit()
+    db.refresh(new_listing)
+    return new_listing
+ 
+@app.put("/listings/{listing_id}", response_model=ListingResponse)
+def update_listing(listing_id: int, listing: ListingCreate, db: Session = Depends(get_db)):
+    db_listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not db_listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    db_listing.title      = listing.title
+    db_listing.price      = listing.price
+    db_listing.condition  = listing.condition
+    db_listing.platform   = listing.platform
+    db_listing.category   = listing.category
+    db_listing.size       = listing.size
+    db_listing.notes      = listing.notes
+    db_listing.weight_lbs = listing.weight_lbs
+    db_listing.image_url  = listing.image_url
+    db_listing.status     = listing.status
+    db.commit()
+    db.refresh(db_listing)
+    return db_listing
+ 
+@app.delete("/listings/{listing_id}")
+def delete_listing(listing_id: int, db: Session = Depends(get_db)):
+    db_listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not db_listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    db.delete(db_listing)
+    db.commit()
+    return {"message": "Listing deleted", "id": listing_id}
 
 @app.post("/issues")
 def report_issue(issue: IssueCreate, db: Session = Depends(get_db)):
@@ -310,6 +380,8 @@ def disconnect_platform(
 
     return {"message": "Platform disconnected successfully"}
 """
+
+'''
 # Temporary test data for dashboard development
 @app.get("/test/add-listing")
 def add_test_listing(db: Session = Depends(get_db)):
@@ -324,5 +396,4 @@ def add_test_listing(db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Test listing added"}
 
-
-
+'''

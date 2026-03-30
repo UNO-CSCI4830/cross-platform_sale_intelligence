@@ -12,14 +12,14 @@ const DUMMY_PASSWORD = "password";
 // Props:
 //   onLogin — callback(email) called with the user's email on success
 export function LoginForm({ onLogin }) {
-  const [mode,     setMode]     = useState("login");   // "login" | "signup"
-  const [firstName,       setFirstName]       = useState("");
-  const [lastName,        setLastName]        = useState("");
-  const [email,           setEmail]           = useState("");
-  const [password,        setPassword]        = useState("");
+  const [mode, setMode] = useState("login");   // "login" | "signup"
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error,           setError]           = useState("");
-  const [loading,         setLoading]         = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     setError("");
@@ -58,9 +58,9 @@ export function LoginForm({ onLogin }) {
         : { first_name: firstName, last_name: lastName, email, password };
 
       const res = await fetch(`${API_BASE}${endpoint}`, {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(body),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -69,6 +69,11 @@ export function LoginForm({ onLogin }) {
         setError(data.detail || "Something went wrong.");
         return;
       }
+
+      // Save session to localStorage so it survives page refreshes
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("userId", data.id);
+      localStorage.setItem("userEmail", data.email);
 
       onLogin(data.email, data.id, data.access_token);
     } catch (err) {

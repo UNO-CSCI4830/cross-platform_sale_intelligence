@@ -43,6 +43,11 @@ class Listing(Base):
     price = Column(Integer, nullable=False)
     condition = Column(String, nullable=False)
     platform = Column(String, nullable=False)
+    category = Column(String, nullable=True)
+    size = Column(String, nullable=True)
+    notes = Column(String, nullable=True)
+    weight_lbs = Column(Float,  nullable=True)
+    image_url = Column(String, nullable=True)
 
     # Listing status (active or sold)
     status = Column(String, default="active")
