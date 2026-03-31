@@ -22,18 +22,22 @@ This database incorporates the items listed on the platform in the PostgreSQL da
 ---
 
 ## Design #2: Structural Design Pattern - Adapter Pattern
-* Adapter pattern was selected because 
+* Adapter pattern was selected due to the nature of this platoform - retieving information from other selling platforms and implement them all to develop a conprehensive software. We will be retreiving information from different selling platforms without modifying thier source code but incude it to the UI. 
 
 The overall diagram is as shown below:
 
 Explanation:
+* The 'Adapter' here is the API of the platform we refer to, and the adaptees are the information regarding each item on sale (i.e. price, condition, size etc.)
 
 ---
 
 ## Design #3: Creational Design Pattern - Factory Pattern
-* Factory pattern was selected because 
+* Factory pattern was selected in implementing the the different selling platforms - mercari, poshmark, and ebay. Each platform information will be retrieved from designated API, and it will give us the flexibility to add new prodcts in each developmental step as well as in developing a tool that is user friendly.
 
 The overall diagram is as shown below:
 
 Explanation:
+* The interface is where the item information will be connected from different platforms.
+* In connecting with the selling platforms, we will be using API to retreive the information required. 
+
 
