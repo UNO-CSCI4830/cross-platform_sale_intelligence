@@ -206,13 +206,13 @@ def list_issues(db: Session = Depends(get_db)):
 
 # Connect External Resale Platforms (FR4)
 @app.get("/auth/{platform}/connect")
-async def connect_platform(platform: str): # , current_user = Depends(get_current_user)  
+async def connect_platform(platform: str, current_user = Depends(get_current_user)  ): 
     params = {
         "client_id": PLATFORM_CONFIGS[platform]["client_id"],
         "redirect_uri": f"{os.getenv('REDIRECT_BASE_URL')}/auth/{platform}/callback", #IMPORTANT: This exact url must be registered with the service and then updated when hosting
         "response_type": "code",
         "scope": PLATFORM_CONFIGS[platform]["scope"], #pulled from configs
-        "state": 1,  # pass user ID so we know who to link on callback, ***Swap with current_user.id when frontend integration is ready***
+        "state": current_user,  # pass user ID so we know who to link on callback, ***Swap with current_user.id when frontend integration is ready***
         "prompt": "login"
     }
     auth_url = PLATFORM_CONFIGS[platform]["auth_url"]
