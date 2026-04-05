@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from backend.db.database import Base
@@ -13,7 +13,8 @@ class User(Base):
     last_name = Column(String, unique = False, index = True, nullable = False)
     password_hash = Column(String, nullable = False)
     created_at = Column(DateTime, default=datetime.utcnow) # Coordinated Universal Time is 6 hours ahead of CST.
-    linked_accounts = relationship("LinkedAccount", back_populates= "user") 
+    linked_accounts = relationship("LinkedAccount", back_populates= "user")
+    listings = relationship("ListingSnapshot", back_populates="user")
 
 # Connect External Resale Platforms (FR4)
 #Side note: Using Oauth2.0 we can only access Ebay and Depop, we can use Graph API for FaceBook, but Mercari and Poshmark have no public API
@@ -30,7 +31,7 @@ class LinkedAccount(Base):
     user = relationship("User", back_populates="linked_accounts")
 
 # Represents a resale listing shown on the dashboard (FR5)
-class Listing(Base):
+'''class Listing(Base):
     __tablename__ = "listings"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -48,7 +49,25 @@ class Listing(Base):
     status = Column(String, default="active")
 
     created_at = Column(DateTime, default=datetime.utcnow)
+'''
+class ListingSnapshot(Base):
+    __tablename__ = "listing_snapshot"
 
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    platform = Column(String, nullable=False)              # "ebay", "depop"
+    platform_listing_id = Column(String, nullable=False)   # listing's ID on eBay
+    title = Column(String, nullable=True)
+    price = Column(Float, nullable=True)
+    quantity = Column(Integer, nullable=True)
+    condition = Column(String, nullable=True)
+    status = Column(String, nullable=True)                 # "active", "sold", 
+    item_url = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)
+    category = Column(String, nullable=True)
+    captured_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="listings")
 # Represents a user-submitted issue or problem report
 class Issue(Base):
     __tablename__ = "issues"

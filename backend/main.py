@@ -6,13 +6,14 @@ load_dotenv() #Load environment variables
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from backend.core.security import get_current_user, create_access_token
 from backend.db.database import Base, engine, get_db
-from backend.db.models import User, Issue, Listing
+from backend.db.models import User, Issue, ListingSnapshot
 from backend.services.user_service import create_user, authenticate_user
-from backend.services.platform_service import PLATFORM_CONFIGS, save_linked_account
+from backend.services.platform_service import PLATFORM_CONFIGS, save_linked_account, fetch_and_save_listings
 import httpx
 
 
@@ -118,6 +119,17 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             "token_type": "bearer"
         }
 
+@app.post("/token")
+def token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Same format as /login, just uses a different format for swagger docs authorization. TESTING ONLY
+    """
+    authenticated_user = authenticate_user(form_data.username, form_data.password, db)
+    if not authenticated_user:
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+    token = create_access_token(authenticated_user.id)
+    return {"access_token": token, "token_type": "bearer"}
+
 @app.post("/logout")
 async def logout():
     return {"message": "Logged out sucessfully"} #Option 1 delete token stored on user's browser, which is done from frontend.
@@ -150,8 +162,8 @@ def get_user_listings(user_id: int, db: Session = Depends(get_db)):
     Returns all active listings for a specific user
     """
     listings = (
-        db.query(Listing)
-        .filter(Listing.user_id == user_id, Listing.status == "active")
+        db.query(ListingSnapshot)
+        .filter(ListingSnapshot.user_id == user_id, ListingSnapshot.status == "active")
         .all()
     )
 
@@ -194,19 +206,20 @@ def list_issues(db: Session = Depends(get_db)):
 
 # Connect External Resale Platforms (FR4)
 @app.get("/auth/{platform}/connect")
-async def connect_platform(platform: str, current_user=Depends(get_current_user)):
+async def connect_platform(platform: str, current_user = Depends(get_current_user) ): 
     params = {
         "client_id": PLATFORM_CONFIGS[platform]["client_id"],
         "redirect_uri": f"{os.getenv('REDIRECT_BASE_URL')}/auth/{platform}/callback", #IMPORTANT: This exact url must be registered with the service and then updated when hosting
         "response_type": "code",
-        "scope": "https://api.ebay.com/oauth/api_scope/sell.inventory", #Tells ebay we want to access listings
-        "state": current_user.id  # pass user ID so we know who to link on callback
+        "scope": PLATFORM_CONFIGS[platform]["scope"], #pulled from configs
+        "state": current_user.id,  # pass user ID so we know who to link on callback, ***Swap with current_user.id when frontend integration is ready***
+        "prompt": "login"
     }
     auth_url = PLATFORM_CONFIGS[platform]["auth_url"]
     return RedirectResponse(url=f"{auth_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}") #builds the url using the parameters above, also where the user is sent to login
 
 @app.get("/auth/{platform}/callback")
-async def platform_callback(platform: str, code: str, state: str, db=Depends(get_db)):
+async def platform_callback(platform: str, code: str, state: str, db = Depends(get_db)):
     config = PLATFORM_CONFIGS[platform]
     
     # Exchange the code eBay gave us for actual tokens
@@ -222,107 +235,25 @@ async def platform_callback(platform: str, code: str, state: str, db=Depends(get
         )
         tokens = response.json()
     
-    # Save tokens to DB
+    # Save tokens to db
     await save_linked_account(
         user_id=int(state),
         platform=platform,
         tokens=tokens,
         db=db
     )
+    # Get initial listings at time of linking and save to db 
+    await fetch_and_save_listings(int(state), platform, db) #state is the same as user.id
     
-    return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}/Dashboard") # Url may be incorrect, need confirmation on dashboard name
-# FR4: Connect an external resale platform to a user account
-"""
-@app.post("/platforms/connect")
-def connect_platform(
-    connection: PlatformConnectRequest,
-    db: Session = Depends(get_db)
-):
-    # Check that the user exists in our system
-    user = db.query(User).filter(User.id == connection.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}/Dashboard")
 
-    # Prevent duplicate active connections for the same platform
-    existing = (
-        db.query(PlatformConnection)
-        .filter(
-            PlatformConnection.user_id == connection.user_id,
-            PlatformConnection.platform_name == connection.platform_name,
-            PlatformConnection.status == "connected"
-        )
-        .first()
-    )
-
-    if existing:
-        raise HTTPException(status_code=400, detail="Platform already connected")
-
-    new_connection = PlatformConnection(
-        user_id=connection.user_id,
-        platform_name=connection.platform_name,
-        external_account_id=connection.external_account_id,
-        status="connected"
-    )
-
-    db.add(new_connection)
-    db.commit()
-    db.refresh(new_connection)
-
-    return {"message": "Platform connected successfully", "connection_id": new_connection.id}
+#FR 12 manual data refresh
+@app.post("listings/refresh")
+async def refresh_listings(platform: str, current_user = Depends(get_current_user), db = Depends(get_db)):
+    await fetch_and_save_listings(current_user.id, platform, db)
+    return {"status": "listings refreshed"}
 
 
-# FR4: Get all connected platforms for a user
-@app.get("/platforms/{user_id}", response_model=list[PlatformConnectionOut])
-def get_connected_platforms(user_id: int, db: Session = Depends(get_db)):
-    connections = (
-        db.query(PlatformConnection)
-        .filter(
-            PlatformConnection.user_id == user_id,
-            PlatformConnection.status == "connected"
-        )
-        .all()
-    )
-
-    return connections
-
-
-# FR4: Disconnect a platform from a user account
-@app.delete("/platforms/disconnect")
-def disconnect_platform(
-    request: PlatformDisconnectRequest,
-    db: Session = Depends(get_db)
-):
-    connection = (
-        db.query(PlatformConnection)
-        .filter(
-            PlatformConnection.user_id == request.user_id,
-            PlatformConnection.platform_name == request.platform_name,
-            PlatformConnection.status == "connected"
-        )
-        .first()
-    )
-
-    if not connection:
-        raise HTTPException(status_code=404, detail="Connected platform not found")
-
-    connection.status = "disconnected"
-    db.commit()
-
-    return {"message": "Platform disconnected successfully"}
-"""
-# Temporary test data for dashboard development
-@app.get("/test/add-listing")
-def add_test_listing(db: Session = Depends(get_db)):
-    listing = Listing(
-        user_id=1,
-        title="Nike Tech Fleece Set",
-        price=120,
-        condition="Excellent",
-        platform="Depop"
-    )
-    db.add(listing)
-    db.commit()
-    return {"message": "Test listing added"}
 
 
 
