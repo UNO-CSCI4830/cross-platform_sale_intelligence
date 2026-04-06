@@ -46,7 +46,7 @@ export function LoginForm({ onLogin }) {
 
     // ── Dummy bypass ───────────────────────────────────────────────────
     if (email === DUMMY_EMAIL && password === DUMMY_PASSWORD) {
-      onLogin(DUMMY_EMAIL);
+      onLogin(DUMMY_EMAIL, 0, "dummy-token");
       return;
     }
 

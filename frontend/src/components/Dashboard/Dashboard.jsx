@@ -13,6 +13,8 @@ const API_BASE = "http://localhost:8000";
 // token — JWT access token (string)
 // onLogout — callback to clear session and return to login
 export default function Dashboard({ user, userId, token, onLogout }) {
+  const [ebayLinked, setEbayLinked] = useState(false);
+  const [ebayLoading, setEbayLoading] = useState(false);
   const [listings, setListings] = useState([]);
   const [activePlatform, setActivePlatform] = useState("All Platforms");
   const [showForm, setShowForm] = useState(false);
@@ -20,6 +22,8 @@ export default function Dashboard({ user, userId, token, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [ebayListings, setEbayListings] = useState([]);
+  const [ebayError, setEbayError] = useState(null);
 
   const authHeaders = {
     "Content-Type": "application/json",
@@ -44,21 +48,87 @@ export default function Dashboard({ user, userId, token, onLogout }) {
     }
   }, [userId, token]);
  
+  // Check eBay link status on load
+  useEffect(() => {
+    const checkEbayStatus = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE}/auth/ebay/status/${userId}`,
+          { headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          }}
+        );
+        const data = await res.json();
+        setEbayLinked(data.linked);
+      } catch (err) {
+        console.error("Could not check eBay status", err);
+      }
+    };
+    checkEbayStatus();
+  }, [userId, token]);
+
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
 
-  // ── Derived values ────────────────────────────────────────────────────
-  const filtered = activePlatform === "All Platforms"
-    ? listings
-    : listings.filter((l) => l.platform === activePlatform);
+  useEffect(() => {
+    if (activePlatform !== "eBay" || !ebayLinked) return;
 
-  const totalValue = filtered.reduce((sum, l) => sum + l.price, 0);
+    const fetchEbayListings = async () => {
+      setEbayLoading(true);
+      setEbayError(null);
+      try {
+        const res = await fetch(
+          `${API_BASE}/ebay/listings/${userId}`,
+          { headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          }}
+        );
+        if (!res.ok) throw new Error("Failed to load eBay listings.");
+        const data = await res.json();
+        setEbayListings(data);
+      } catch (err) {
+        setEbayError(err.message);
+      } finally {
+        setEbayLoading(false);
+      }
+    };
+    fetchEbayListings();
+  }, [activePlatform, ebayLinked, userId, token]);
+
+  // ── Derived values ────────────────────────────────────────────────────
+  const allListings = ebayLinked ? [...listings, ...ebayListings] : listings;
+
+  const filtered = activePlatform === "All Platforms"
+    ? allListings
+    : activePlatform === "eBay" && ebayLinked
+      ? ebayListings
+      : listings.filter((l) => l.platform === activePlatform);
+
+  const totalValue = filtered.reduce((sum, l) => sum + (l.price || 0), 0);
   const avgPrice = filtered.length
     ? (totalValue / filtered.length).toFixed(2)
     : "0.00";
 
   // ── Handlers ──────────────────────────────────────────────────────────
+  // Handling Ebay listings
+  const handleLinkEbay = async () => {
+    setEbayLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/ebay/connect`, {
+        headers: authHeaders,
+      });
+      const data = await res.json();
+      if (data.auth_url) window.location.href = data.auth_url;
+    } catch (err) {
+      console.error("Failed to start eBay auth", err);
+    } finally {
+      setEbayLoading(false);
+    }
+  };
+
   // Add a brand-new listing
     const handleAddListing = async (newListing) => {
     try {
@@ -118,8 +188,10 @@ export default function Dashboard({ user, userId, token, onLogout }) {
 
         {PLATFORMS.map((p) => {
           const count = p === "All Platforms"
-            ? listings.length
-            : listings.filter((l) => l.platform === p).length;
+            ? allListings.length
+            : p === "eBay" && ebayLinked
+              ? ebayListings.length
+              : listings.filter((l) => l.platform === p).length;
 
           return (
             <div
@@ -135,7 +207,7 @@ export default function Dashboard({ user, userId, token, onLogout }) {
 
         <div className="sidebar__footer">
           <p title={user}>{user}</p>
-          <p>v0.1 · Baseline Build</p>
+          <p>v1.0 · Sprint 1</p>
 
           <button className="sidebar__profile" onClick={() => setShowProfile(true)}>
             ✎ Edit Profile
@@ -179,38 +251,77 @@ export default function Dashboard({ user, userId, token, onLogout }) {
 
         {/* Stats bar */}
         <div className="stats-bar">
-          <StatCard label="Total Listings" value={filtered.length}  color={COLORS.text}   />
+          <StatCard label="Total Listings" value={filtered.length} color={COLORS.text} />
           <StatCard label="Total Value" value={`$${totalValue.toFixed(2)}`} color={COLORS.accent} />
-          <StatCard label="Avg Price" value={`$${avgPrice}`}  color={COLORS.text}   />
+          <StatCard label="Avg Price" value={`$${avgPrice}`} color={COLORS.text} />
         </div>
 
-        {/* Listings */}
-        {loading ? (
-          <div className="empty-state">Loading your listings…</div>
-        ) : error ? (
-          <div className="empty-state" style={{ color: "#e05c5c" }}>
-            {error}&nbsp;
+        {activePlatform === "eBay" && !ebayLinked && (
+          <div className="ebay-connect-banner">
+            <div>
+              <p className="ebay-connect-banner__title">Connect your eBay account</p>
+               <p className="ebay-connect-banner__sub">
+                  Link your eBay seller account to pull your live listings into the dashboard.
+              </p>
+            </div>
             <button
-              onClick={fetchListings}
-              style={{ cursor: "pointer", color: "#f0a500", background: "none", border: "none", fontFamily: "inherit" }}
+              className="btn-ebay-link"
+              onClick={handleLinkEbay}
+              disabled={ebayLoading}
             >
-              Retry
+              {ebayLoading ? "Redirecting…" : "🔗 Link eBay Account"}
             </button>
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            No listings yet. Click "+ Add Listing" to get started.
-          </div>
+        )}
+
+        {activePlatform === "eBay" && ebayLinked ? (
+          ebayLoading ? (
+            <div className="empty-state">Loading eBay listings…</div>
+          ) : ebayError ? (
+            <div className="empty-state" style={{ color: "#e05c5c" }}>
+              {ebayError}
+            </div>
+          ) : ebayListings.length === 0 ? (
+            <div className="empty-state">No eBay listings found.</div>
+          ) : (
+            <div className="listings-grid">
+              {ebayListings.map((l) => (
+                <GridCard
+                  key={l.id}
+                  listing={l}
+                  onClick={null}
+                />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="listings-grid">
-            {filtered.map((l) => (
-              <GridCard
-                key={l.id}
-                listing={l}
-                onClick={() => setEditingListing(l)}
-              />
-            ))}
-          </div>
+          loading ? (
+            <div className="empty-state">Loading your listings…</div>
+          ) : error ? (
+            <div className="empty-state" style={{ color: "#e05c5c" }}>
+              {error}&nbsp;
+              <button
+                onClick={fetchListings}
+                style={{ cursor: "pointer", color: "#f0a500", background: "none", border: "none", fontFamily: "inherit" }}
+              >
+                Retry
+              </button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="empty-state">
+              No listings yet. Click "+ Add Listing" to get started.
+            </div>
+          ) : (
+            <div className="listings-grid">
+              {filtered.map((l) => (
+                <GridCard
+                  key={l.id}
+                  listing={l}
+                  onClick={() => setEditingListing(l)}
+                />
+              ))}
+            </div>
+          )
         )}
       </main>
 
@@ -258,8 +369,8 @@ function StatCard({ label, value, color }) {
 
 // ── ProfileForm ───────────────────────────────────────────────────────────
 function ProfileForm({ userId, currentEmail, token, onClose }) {
-  const [email,   setEmail]   = useState(currentEmail);
-  const [error,   setError]   = useState("");
+  const [email, setEmail] = useState(currentEmail);
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
  

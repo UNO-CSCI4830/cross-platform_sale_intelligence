@@ -8,10 +8,11 @@ from backend.db.models import LinkedAccount
 
 PLATFORM_CONFIGS = {
     "ebay": {
-        "auth_url": "https://auth.ebay.com/oauth2/authorize", #User's browser goes here to login
-        "token_url": "https://api.ebay.com/identity/v1/oauth2/token", #Backend server goes here 
+        "auth_url": "https://auth.sandbox.ebay.com/oauth2/authorize",
+        "token_url": "https://api.sandbox.ebay.com/identity/v1/oauth2/token",
         "client_id": os.getenv("EBAY_CLIENT_ID"),
         "client_secret": os.getenv("EBAY_CLIENT_SECRET"),
+        "api_base": "https://api.sandbox.ebay.com",
     }
     # we'll add depop later once ebay is ready to go
 }
@@ -41,15 +42,14 @@ async def save_linked_account(user_id: int, platform: str, tokens: dict, db):
     """Create or update a linked account after OAuth callback."""
     account = db.query(LinkedAccount).filter_by(user_id=user_id, platform=platform).first()
 
-    if not account: # If no account found, make one
+    if not account:
         account = LinkedAccount(user_id=user_id, platform=platform)
 
-    account.access_token = encrypt_token(tokens["access_token"])
-    account.refresh_token = encrypt_token(tokens.get("refresh_token"))
-    account.token_expiry = tokens.get("expiry")
+    account.access_token  = encrypt_token(tokens["access_token"])
+    account.refresh_token = encrypt_token(tokens.get("refresh_token", ""))
+    account.token_expiry  = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 7200))
     db.add(account)
     db.commit()
-
 
 async def _refresh_token(platform: str, refresh_token: str) -> str:
     """If token is about to expire, get a new one"""

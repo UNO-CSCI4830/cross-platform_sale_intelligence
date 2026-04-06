@@ -305,3 +305,87 @@
   color: #444;
   font-style: italic;
 }
+
+/* Comps suggestion panel — appears below the Title field */
+.comps-suggestion {
+  background: #0d1a0f;
+  border: 1px solid #1e3d22;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+ 
+.comps-suggestion__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+ 
+.comps-suggestion__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4caf7d;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+ 
+.comps-suggestion__meta {
+  font-size: 10px;
+  color: #4a7a56;
+}
+ 
+.comps-suggestion__prices {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+ 
+.comps-suggestion__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+ 
+.comps-suggestion__stat-label {
+  font-size: 10px;
+  color: #4a7a56;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+ 
+.comps-suggestion__stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #f0ede8;
+}
+ 
+.comps-suggestion__stat-value--accent {
+  color: #4caf7d;
+}
+ 
+.comps-suggestion__divider {
+  width: 1px;
+  height: 28px;
+  background: #1e3d22;
+}
+ 
+.comps-suggestion__use-btn {
+  margin-left: auto;
+  background: #1e3d22;
+  border: 1px solid #2d5c32;
+  border-radius: 5px;
+  color: #4caf7d;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+ 
+.comps-suggestion__use-btn:hover {
+  background: #2d5c32;
+}

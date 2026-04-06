@@ -213,3 +213,47 @@
   color: #e05c5c;
   border-color: rgba(224, 92, 92, 0.27);
 }
+
+.ebay-connect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  border-left: 3px solid #f5a623;
+  border-radius: 8px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+}
+
+.ebay-connect-banner__title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0ede8;
+}
+
+.ebay-connect-banner__sub {
+  margin: 0;
+  font-size: 12px;
+  color: #7a7a7a;
+}
+
+.btn-ebay-link {
+  background: #f5a623;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 20px;
+  transition: opacity 0.15s;
+}
+
+.btn-ebay-link:hover:not(:disabled) { opacity: 0.85; }
+.btn-ebay-link:disabled { opacity: 0.5; cursor: not-allowed; }
