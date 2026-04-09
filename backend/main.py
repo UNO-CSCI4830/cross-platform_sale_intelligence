@@ -9,10 +9,10 @@ from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from backend.core.security import get_current_user, create_access_token
+from backend.core.security import get_current_user, create_access_token, verify_password
 from backend.db.database import Base, engine, get_db
 from backend.db.models import User, Issue, ListingSnapshot
-from backend.services.user_service import create_user, authenticate_user
+from backend.services.user_service import create_user, authenticate_user,update_email, change_password
 from backend.services.platform_service import PLATFORM_CONFIGS, save_linked_account, fetch_and_save_listings
 import httpx
 
@@ -46,6 +46,11 @@ class UserLogin(BaseModel):
 # FR14: User Profile Update input model
 class UserUpdate(BaseModel):
     email: str  # New email address for the user
+
+# FR3: Password Reset
+class PasswordUpdate(BaseModel):
+    current_password: str 
+    new_password:str 
 
 # Data returned to the dashboard for each listing
 class ListingResponse(BaseModel):
@@ -144,16 +149,21 @@ def update_user_profile(
     """
     FR14: Allows a user to update their profile information (email).
     """
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user.email = user_update.email  # Update email
-    db.commit()
-    db.refresh(user)
+    update_email(user_id = user_id, new_email = user_update.email, db = db)
 
     return {"message": "User profile updated successfully"}
+
+@app.put("/users/{user_id}/password")
+def change_user_password(
+    user_id: int,
+    password_update: PasswordUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    FR2: Allows a user to change their password
+    """
+    change_password(user_id = user_id, current_password = password_update.current_password, new_password = password_update.new_password, db = db)
+    return {"message": "Password updated successfully"}
 
 # FR5: Unified Dashboard Display
 @app.get("/listings/{user_id}", response_model=list[ListingResponse])

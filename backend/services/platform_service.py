@@ -49,71 +49,8 @@ async def fetch_and_save_listings(user_id: int, platform: str, db):
     token = await get_valid_token(user_id, platform, db)
 
     if platform == "ebay":
-        await _mock_ebay_listings(user_id, token, db) #should be _fetch_ebay_listings(), but we're gonna hardcode listings for now
+        await _fetch_ebay_listings(user_id, token, db)
 
-async def _mock_ebay_listings(user_id: int, token, db):
-    """Temporary mock listings for prototype demo - replace with real eBay fetch after presentation"""
-    mock_listings = [
-        {
-            "platform_listing_id": "mock_001",
-            "title": "Nike Air Max 90 - Size 10",
-            "price": 120.00,
-            "quantity": 1,
-            "condition": "Used",
-            "status": "active",
-            "item_url": "https://www.ebay.com/itm/mock_001",
-            "image_url": None
-        },
-        {
-            "platform_listing_id": "mock_002",
-            "title": "Vintage Denim Jacket - Medium",
-            "price": 45.00,
-            "quantity": 1,
-            "condition": "Good",
-            "status": "active",
-            "item_url": "https://www.ebay.com/itm/mock_002",
-            "image_url": None
-        },
-        {
-            "platform_listing_id": "mock_003",
-            "title": "iPhone 12 Case",
-            "price": 12.99,
-            "quantity": 3,
-            "condition": "New",
-            "status": "active",
-            "item_url": "https://www.ebay.com/itm/mock_003",
-            "image_url": None
-        }
-    ]
-
-    for listing in mock_listings: #uses platform_listing_id to ensure duplicates aren't made when we refresh
-        existing = db.query(ListingSnapshot).filter_by(
-            user_id=user_id,
-            platform="ebay",
-            platform_listing_id=listing["platform_listing_id"]
-        ).first()
-
-        if not existing: #create a new row if listing is new (not really relevant here since its hardcoded)
-            existing = ListingSnapshot(
-                user_id=user_id,
-                platform="ebay",
-                platform_listing_id=listing["platform_listing_id"]
-            )
-
-        existing.title = listing["title"]
-        existing.price = listing["price"]
-        existing.quantity = listing["quantity"]
-        existing.condition = listing["condition"]
-        existing.status = listing["status"]
-        existing.item_url = listing["item_url"]
-        existing.image_url = listing["image_url"]
-        existing.captured_at = datetime.utcnow()
-
-        db.add(existing)
-
-    db.commit()
-    print(f"SAVED {len(mock_listings)} mock listings to DB")
-'''
 async def _fetch_ebay_listings(user_id: int, token: str, db):
     url = "https://api.sandbox.ebay.com/ws/api.dll"
     headers = {
@@ -149,7 +86,7 @@ async def _fetch_ebay_listings(user_id: int, token: str, db):
     items = root.findall(".//ns:ActiveList/ns:ItemArray/ns:Item", ns)
     print(f"ITEMS FOUND: {len(items)}")
 
-    for item in items:
+    for item in items: #iterate through each item received from the api request
         def get(tag):
             el = item.find(f"ns:{tag}", ns)
             return el.text if el is not None else None
@@ -163,13 +100,13 @@ async def _fetch_ebay_listings(user_id: int, token: str, db):
         image_url = image_url.text if image_url is not None else None
         item_url = f"https://www.sandbox.ebay.com/itm/{item_id}"
 
-        existing = db.query(ListingSnapshot).filter_by(
+        existing = db.query(ListingSnapshot).filter_by( #does the current item already exist in the db
             user_id=user_id,
             platform="ebay",
             platform_listing_id=item_id
         ).first()
 
-        if not existing:
+        if not existing: #if it doesn't add it
             existing = ListingSnapshot(
                 user_id=user_id,
                 platform="ebay",
@@ -189,7 +126,7 @@ async def _fetch_ebay_listings(user_id: int, token: str, db):
 
     db.commit()
     print(f"SAVED {len(items)} listings to DB")
-    '''
+
 '''
 This code works but Ebay's API refuses to return anything:
 STATUS: 200
