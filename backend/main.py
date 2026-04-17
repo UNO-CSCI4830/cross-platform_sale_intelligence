@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from backend.core.security import get_current_user, create_access_token, verify_password
+from pydantic import BaseModel, field_validator
+from backend.core.security import get_current_user, create_access_token
 from backend.db.database import Base, engine, get_db
 from backend.db.models import User, Issue, ListingSnapshot
 from backend.services.user_service import create_user, authenticate_user,update_email, change_password
@@ -33,24 +33,56 @@ app.add_middleware(
 #Allows front end and backend to host locally, will be changed later when we find where we are hostings.
 
 #Pydantic schemas
+"""
+IMPORTANT ABOUT VALIDATORS: FastAPI automatically catches these and returns 422, HOWEVER it returns the message as a list of objects
+So when making test cases only assert for the status code, not the response.message
+"""
 class UserCreate(BaseModel):
     email: str
     first_name: str
     last_name: str
     password: str
 
+    @field_validator("email", "first_name", "last_name", "password")
+    @classmethod
+    def fields_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Account creation fields cannot be empty") 
+        return v
+
 class UserLogin(BaseModel):
     email:str
     password: str
+
+    @field_validator("email", "password") #password is sort of redunant here due to the previous class validator
+    @classmethod
+    def fields_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Login fields cannot be empty")
+        return v
 
 # FR14: User Profile Update input model
 class UserUpdate(BaseModel):
     email: str  # New email address for the user
 
+    @field_validator("email")
+    @classmethod
+    def fields_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Email field cannot be empty")
+        return v
+
 # FR3: Password Reset
 class PasswordUpdate(BaseModel):
     current_password: str 
     new_password:str 
+
+    @field_validator("current_password", "new_password")
+    @classmethod
+    def fields_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Password fields cannot be empty")
+        return v
 
 # Data returned to the dashboard for each listing
 class ListingResponse(BaseModel):
@@ -109,6 +141,8 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code = 400, detail = "Email already registered")
     created_user = create_user(user.email,user.first_name, user.last_name, user.password, db)
     return {"id": created_user.id, "email": created_user.email}
+
+
 
 #Route for logging in
 @app.post("/login")
@@ -260,7 +294,7 @@ async def platform_callback(platform: str, code: str, state: str, db = Depends(g
 #FR 12 manual data refresh
 @app.post("listings/refresh")
 async def refresh_listings(platform: str, current_user = Depends(get_current_user), db = Depends(get_db)):
-    await fetch_and_save_listings(current_user.id, platform, db)
+    await fetch_and_save_listings(current_user, platform, db)
     return {"status": "listings refreshed"}
 
 
