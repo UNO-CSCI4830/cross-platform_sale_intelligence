@@ -23,3 +23,19 @@ To Run:
 FR14 - Added backend support for updating user account information. Implemented the PUT /users/{user_id} endpoint to allow users to update their email address with validation to ensure the user exists and the email format is valid.<br>
 
 ```FR5 - Added backend support for the unified dashboard display. Implemented a Listing data model and a GET /listings/{user_id} endpoint that returns all active listings for a user in a frontend-ready JSON format. Added a temporary development route, GET /test/add-listing, to seed test listing data for dashboard development.```
+
+
+# Remaining Issue Status - CP
+NFR5. Scalability - Measured by adding another platform, Current: eBay, Goal: add Depop, Adapter pattern supports future expansion
+
+NFR3. Availability - System runs locally (no cloud hosting), Not available 24/7, Impacts real-time features
+
+FR11. Sold Item Notification - Challenging to complete
+
+FR10. Sales History View - Challenging to complete
+
+FR9. Sales Performance Tracking - Challenging to complete 
+
+FR8. Condition Suggestion Tool - Backend complete, Frontend connection pending
+
+FR6. Search and Filter Listings - Development ongoing
