@@ -187,6 +187,7 @@ def update_user_profile(
 
     return {"message": "User profile updated successfully"}
 
+# Update a user's password by user ID
 @app.put("/users/{user_id}/password")
 def change_user_password(
     user_id: int,
@@ -213,6 +214,7 @@ def get_user_listings(user_id: int, db: Session = Depends(get_db)):
 
     return listings
 
+# Create new issue from user's data
 @app.post("/issues")
 def report_issue(issue: IssueCreate, db: Session = Depends(get_db)):
     # Create a new Issue object from user input
@@ -232,6 +234,7 @@ def report_issue(issue: IssueCreate, db: Session = Depends(get_db)):
         "issue_id": new_issue.id
     }
 
+# Retrieves issues from atabase, newest first
 @app.get("/issues")
 def list_issues(db: Session = Depends(get_db)):
     # Retrieve all reported issues, newest first
