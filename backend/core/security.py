@@ -42,6 +42,7 @@ def hash_password(password:str, rounds=12) -> bytes:
     return pwd
 
 def verify_password(password:str,hash:bytes) -> bool:
+    hash = hash.encode('utf-8') #user hashed password is stored as a string and we need to convert back to bytes
     return bcrypt.checkpw(password.encode(), hash)
 
 fernet = Fernet(os.getenv("ENCRYPTION_KEY"))
