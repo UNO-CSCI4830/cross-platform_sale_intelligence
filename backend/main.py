@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel, field_validator
 from backend.core.security import get_current_user, create_access_token
 from backend.db.database import Base, engine, get_db
@@ -94,9 +95,26 @@ class ListingResponse(BaseModel):
     condition: str
     platform: str
     status: str
+    category: str
+    platform_listing_id: str
+    image_url: str
+    item_url: str
+    quantity: int
 
-    class Config:
-        from_attributes = True
+
+#Data format to be sent to the backend for listing creation
+class ListingRequest(BaseModel):
+    platform: str
+    platform_listing_id: str
+    title: str
+    price: float
+    quantity: int
+    condition: str
+    status: str
+    item_url: str
+    image_url: str
+    category: str
+
 
 # FR4: Input model for connecting an external platform
 class PlatformConnectRequest(BaseModel):
@@ -302,7 +320,37 @@ async def refresh_listings(platform: str, current_user = Depends(get_current_use
     await fetch_and_save_listings(current_user, platform, db)
     return {"status": "listings refreshed"}
 
+@app.post("/create-listing", response_model=ListingRequest)
+def create_listing(listing: ListingRequest, db: Session = Depends(get_db)):
+    """
+    Create a new listing and add it to the database.
+    """
+    # Ensure the user exists (you might want to handle it differently depending on the situation)
+    user = db.query(User).filter(User.id == listing.user_id).first()  # Assuming `user_id` is part of the listing request
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
+    # Create a new ListingSnapshot object to save to the database
+    new_listing = ListingSnapshot(
+        user_id=user.id,
+        platform=listing.platform,
+        platform_listing_id=listing.platform_listing_id,
+        title=listing.title,
+        price=listing.price,
+        quantity=listing.quantity,
+        condition=listing.condition,
+        status=listing.status,
+        item_url=listing.item_url,
+        image_url=listing.image_url,
+        category=listing.category,
+        captured_at= func.now()
+    )
+
+    db.add(new_listing)
+    db.commit()  # Commit to save the listing to the database
+    db.refresh(new_listing)  # Refresh to get the updated object with ID
+
+    return new_listing  # Return the created listing
 
 
 
