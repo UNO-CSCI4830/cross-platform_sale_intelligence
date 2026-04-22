@@ -41,8 +41,8 @@ def hash_password(password:str, rounds=12) -> bytes:
     pwd = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=rounds)).decode('utf-8')
     return pwd
 
-def verify_password(password:str,hash:bytes) -> bool:
-    return bcrypt.checkpw(password.encode(), hash)
+def verify_password(password:str,hash: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hash.encode())
 
 fernet = Fernet(os.getenv("ENCRYPTION_KEY"))
 def encrypt_token(token:str) -> str:
