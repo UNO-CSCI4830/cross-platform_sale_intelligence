@@ -31,7 +31,7 @@ def test_empty_username():
         UserLogin(email=email, password=password)  # empty email
 
 # test 4 empty password - password should not be empty
-def test_login_failure_details():
+def test_empty_password():
     with pytest.raises(ValueError):
         email = "very_valid2@email.com"
         password = "  "  # empty password
