@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./LoginForm.css";
 
-const API_BASE = "https://sale-intelligence-1.onrender.com/";
+const API_BASE = "https://cross-platform-sale-intelligence.onrender.com";
 
 // ── Dummy credentials ─────────────────────────────────────────────────────
 const DUMMY_EMAIL    = "dummy@email.com";
