@@ -10,21 +10,29 @@ from backend.main import UserLogin
 
 # test 1 valid login credentials
 def test_valid_login():
-    user = UserLogin(email="user@example.com", password="good_password_123")
-    assert user.email == "user@example.com"
-    assert user.password == "good_password_123"
+    email = "user1@example.com"
+    password = "good_password_123"
+    user = UserLogin(email=email, password=password)
+    assert user.email == email
+    assert user.password == password
 
-# test 2 invalid login value types
+# test 2 invalid login value types - strings are accepted but integers are not
 def test_invalid_login():
     with pytest.raises(ValueError):
-        UserLogin(email=1234, password=5678)  
+        email = 1234  # invalid email type
+        password = 5678  # invalid password type
+        UserLogin(email=email, password=password)  
 
-# test 3 empty username
+# test 3 empty username - user name should not be empty
 def test_empty_username():
     with pytest.raises(ValueError):
-        UserLogin(email=" ", password="valid_password_987")  # empty email
+        email = " "  # empty email
+        password = "valid_password_987"
+        UserLogin(email=email, password=password)  # empty email
 
-# test 4 detail on which field failed
+# test 4 empty password - password should not be empty
 def test_login_failure_details():
     with pytest.raises(ValueError):
-        UserLogin(email="very_valid@email.com", password="  ")  # empty password")
+        email = "very_valid2@email.com"
+        password = "  "  # empty password
+        UserLogin(email=email, password=password)
