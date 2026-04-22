@@ -16,16 +16,18 @@ from backend.services.user_service import create_user, authenticate_user,update_
 from backend.services.platform_service import PLATFORM_CONFIGS, save_linked_account, fetch_and_save_listings
 import httpx
 
-
-
 Base.metadata.create_all(bind=engine) # Create tables, if they do not already exist
 
 # FastAPI app instance
 app = FastAPI()
 
-app.add_middleware( 
+import os
+
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
+app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
