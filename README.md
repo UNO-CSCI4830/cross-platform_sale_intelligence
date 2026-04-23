@@ -24,6 +24,12 @@ FR14 - Added backend support for updating user account information. Implemented 
 
 ```FR5 - Added backend support for the unified dashboard display. Implemented a Listing data model and a GET /listings/{user_id} endpoint that returns all active listings for a user in a frontend-ready JSON format. Added a temporary development route, GET /test/add-listing, to seed test listing data for dashboard development.```
 
+# Running Frontend
+To Run
+1. Clone the repository to your machine or pull changes to main
+2. Use "npm install"
+3. Run "npm install" This will automatically open to http://localhost:3000
+4. press control C to stop script from running
 
 # Remaining Issue Status - CP
 NFR5. Scalability - Measured by adding another platform, Current: eBay, Goal: add Depop, Adapter pattern supports future expansion
