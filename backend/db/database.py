@@ -12,10 +12,11 @@ engine = create_engine(DATABASE_URL)
 Sessionlocal = sessionmaker(autocommit = False, autoflush = False, bind = engine)
 Base = declarative_base()
 
+
 # Dependency for FastAPI
 def get_db():
-    db = Sessionlocal() # Every HTTP request gets it own session
+    db = Sessionlocal()  # Every HTTP request gets its own session
     try:
         yield db
     finally:
-        db.close() #close session regardless of result
+        db.close()  # Close session regardless of result

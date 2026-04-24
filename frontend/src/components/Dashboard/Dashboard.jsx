@@ -1,45 +1,201 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./Dashboard.css";
 import { GridCard } from "../ListingCard/ListingCard";
 import { AddListingForm } from "../ListingForm/ListingForm";
-import { COLORS, PLATFORMS, LISTINGS } from "../../constants/data";
+import { COLORS, PLATFORMS } from "../../constants/data";
+
+const API_BASE = "http://localhost:8000";
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
 // Top-level component. Owns all app state:
-//   listings       — array of listing objects
-//   activePlatform — currently selected sidebar filter
-//   showForm       — boolean, whether the Add Listing modal is open
-//   editingListing — listing object being edited, or null
-export default function Dashboard({ user, onLogout }) {
-  const [listings,        setListings]        = useState(LISTINGS);
-  const [activePlatform,  setActivePlatform]  = useState("All Platforms");
-  const [showForm,        setShowForm]        = useState(false);
-  const [editingListing,  setEditingListing]  = useState(null);
+// user — logged-in user's email (string)
+// userId — logged-in user's id (int)
+// token — JWT access token (string)
+// onLogout — callback to clear session and return to login
+export default function Dashboard({ user, userId, token, onLogout }) {
+  const [ebayLinked, setEbayLinked] = useState(false);
+  const [ebayLoading, setEbayLoading] = useState(false);
+  const [listings, setListings] = useState([]);
+  const [activePlatform, setActivePlatform] = useState("All Platforms");
+  const [showForm, setShowForm] = useState(false);
+  const [editingListing, setEditingListing] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const [ebayListings, setEbayListings] = useState([]);
+  const [ebayError, setEbayError] = useState(null);
 
-  // ── Derived values ────────────────────────────────────────────────────
-  const filtered = activePlatform === "All Platforms"
-    ? listings
-    : listings.filter((l) => l.platform === activePlatform);
+  // ── Search state ───────────────────────────────────────────────────────
+  // A single query string matched against both title and condition.
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const totalValue = filtered.reduce((sum, l) => sum + l.price, 0);
-  const avgPrice   = filtered.length
+  const authHeaders = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`,
+  };
+
+  // ── Fetch listings ─────────────────────────────────────────────────────
+  const fetchListings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/listings/${userId}`, {
+        headers: authHeaders,
+      });
+      if (!res.ok) throw new Error("Failed to load listings.");
+      const data = await res.json();
+      setListings(data.map(normalise));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, token]);
+
+  // Check eBay link status on load
+  useEffect(() => {
+    const checkEbayStatus = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE}/auth/ebay/status/${userId}`,
+          { headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          }}
+        );
+        const data = await res.json();
+        setEbayLinked(data.linked);
+      } catch (err) {
+        console.error("Could not check eBay status", err);
+      }
+    };
+    checkEbayStatus();
+  }, [userId, token]);
+
+  useEffect(() => {
+    fetchListings();
+  }, [fetchListings]);
+
+  useEffect(() => {
+    if (activePlatform !== "eBay" || !ebayLinked) return;
+
+    const fetchEbayListings = async () => {
+      setEbayLoading(true);
+      setEbayError(null);
+      try {
+        const res = await fetch(
+          `${API_BASE}/ebay/listings/${userId}`,
+          { headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          }}
+        );
+        if (!res.ok) throw new Error("Failed to load eBay listings.");
+        const data = await res.json();
+        setEbayListings(data);
+      } catch (err) {
+        setEbayError(err.message);
+      } finally {
+        setEbayLoading(false);
+      }
+    };
+    fetchEbayListings();
+  }, [activePlatform, ebayLinked, userId, token]);
+
+  // ── Derived values ─────────────────────────────────────────────────────
+  const allListings = ebayLinked ? [...listings, ...ebayListings] : listings;
+
+  // Step 1: filter by platform (existing logic, unchanged)
+  const platformFiltered = activePlatform === "All Platforms"
+    ? allListings
+    : activePlatform === "eBay" && ebayLinked
+      ? ebayListings
+      : listings.filter((l) => l.platform === activePlatform);
+
+  // Step 2: filter by search query across title and condition.
+  // Trimming and lowercasing once here keeps each per-item check cheap.
+  const query = searchQuery.trim().toLowerCase();
+  const filtered = query
+    ? platformFiltered.filter(
+        (l) =>
+          l.title.toLowerCase().includes(query) ||
+          l.condition.toLowerCase().includes(query)
+      )
+    : platformFiltered;
+
+  // Stats always reflect the final visible set (post-search)
+  const totalValue = filtered.reduce((sum, l) => sum + (l.price || 0), 0);
+  const avgPrice = filtered.length
     ? (totalValue / filtered.length).toFixed(2)
     : "0.00";
 
-  // ── Handlers ──────────────────────────────────────────────────────────
-  // Add a brand-new listing
-  const handleAddListing = (newListing) =>
-    setListings((prev) => [newListing, ...prev]);
+  // ── Handlers ───────────────────────────────────────────────────────────
+  // Clear search whenever the user switches platforms so stale results
+  // don't carry over to a different platform view.
+  const handlePlatformChange = (platform) => {
+    setActivePlatform(platform);
+    setSearchQuery("");
+  };
 
-  // Save edits to an existing listing
-  const handleSaveListing = (updated) =>
-    setListings((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+  const handleLinkEbay = async () => {
+    setEbayLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/ebay/connect`, {
+        headers: authHeaders,
+      });
+      const data = await res.json();
+      if (data.auth_url) window.location.href = data.auth_url;
+    } catch (err) {
+      console.error("Failed to start eBay auth", err);
+    } finally {
+      setEbayLoading(false);
+    }
+  };
 
-  // Delete a listing by id
-  const handleDeleteListing = (id) =>
-    setListings((prev) => prev.filter((l) => l.id !== id));
+  const handleAddListing = async (newListing) => {
+    try {
+      const res = await fetch(`${API_BASE}/listings`, {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify(serialise(newListing, userId)),
+      });
+      if (!res.ok) throw new Error("Failed to add listing.");
+      const saved = await res.json();
+      setListings((prev) => [normalise(saved), ...prev]);
+    } catch (err) {
+      alert("Error adding listing: " + err.message);
+    }
+  };
 
-  // ── Render ────────────────────────────────────────────────────────────
+  const handleSaveListing = async (updated) => {
+    try {
+      const res = await fetch(`${API_BASE}/listings/${updated.id}`, {
+        method: "PUT",
+        headers: authHeaders,
+        body: JSON.stringify(serialise(updated, userId)),
+      });
+      if (!res.ok) throw new Error("Failed to update listing.");
+      const saved = await res.json();
+      setListings((prev) => prev.map((l) => (l.id === saved.id ? normalise(saved) : l)));
+    } catch (err) {
+      alert("Error updating listing: " + err.message);
+    }
+  };
+
+  const handleDeleteListing = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/listings/${id}`, {
+        method: "DELETE",
+        headers: authHeaders,
+      });
+      if (!res.ok) throw new Error("Failed to delete listing.");
+      setListings((prev) => prev.filter((l) => l.id !== id));
+    } catch (err) {
+      alert("Error deleting listing: " + err.message);
+    }
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="dashboard">
 
@@ -54,14 +210,16 @@ export default function Dashboard({ user, onLogout }) {
 
         {PLATFORMS.map((p) => {
           const count = p === "All Platforms"
-            ? listings.length
-            : listings.filter((l) => l.platform === p).length;
+            ? allListings.length
+            : p === "eBay" && ebayLinked
+              ? ebayListings.length
+              : listings.filter((l) => l.platform === p).length;
 
           return (
             <div
               key={p}
               className={`sidebar__item ${activePlatform === p ? "sidebar__item--active" : ""}`}
-              onClick={() => setActivePlatform(p)}
+              onClick={() => handlePlatformChange(p)}
             >
               <span>{p}</span>
               <span className="sidebar__item-count">{count}</span>
@@ -71,7 +229,12 @@ export default function Dashboard({ user, onLogout }) {
 
         <div className="sidebar__footer">
           <p title={user}>{user}</p>
-          <p>v0.1 · Baseline Build</p>
+          <p>v2.0 · Sprint 2</p>
+
+          <button className="sidebar__profile" onClick={() => setShowProfile(true)}>
+            ✎ Edit Profile
+          </button>
+
           <a
             href="https://forms.gle/uJjbzj26iHBpLDad9"
             target="_blank"
@@ -97,39 +260,116 @@ export default function Dashboard({ user, onLogout }) {
           <div>
             <h1 className="main__title">{activePlatform}</h1>
             <p className="main__subtitle">
-              {filtered.length} listing{filtered.length !== 1 ? "s" : ""}
+              {/* Show how many listings match out of the platform total when searching */}
+              {query
+                ? `${filtered.length} of ${platformFiltered.length} listing${platformFiltered.length !== 1 ? "s" : ""}`
+                : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""}`
+              }
             </p>
           </div>
 
           <div className="main__actions">
+            {/* Search bar */}
+            <div className="search-bar">
+              <span className="search-bar__icon">🔍</span>
+              <input
+                className="search-bar__input"
+                type="text"
+                placeholder="Search by title or condition…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  className="search-bar__clear"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <button className="btn-add" onClick={() => setShowForm(true)}>
               + Add Listing
             </button>
           </div>
         </div>
 
-        {/* Stats bar */}
+        {/* Stats bar — always reflects the filtered (post-search) set */}
         <div className="stats-bar">
-          <StatCard label="Total Listings" value={filtered.length}             color={COLORS.text}   />
-          <StatCard label="Total Value"    value={`$${totalValue.toFixed(2)}`} color={COLORS.accent} />
-          <StatCard label="Avg Price"      value={`$${avgPrice}`}              color={COLORS.text}   />
+          <StatCard label="Total Listings" value={filtered.length} color={COLORS.text} />
+          <StatCard label="Total Value" value={`$${totalValue.toFixed(2)}`} color={COLORS.accent} />
+          <StatCard label="Avg Price" value={`$${avgPrice}`} color={COLORS.text} />
         </div>
 
-        {/* Listings */}
-        {filtered.length === 0 ? (
-          <div className="empty-state">
-            No listings yet. Click "+ Add Listing" to get started.
+        {activePlatform === "eBay" && !ebayLinked && (
+          <div className="ebay-connect-banner">
+            <div>
+              <p className="ebay-connect-banner__title">Connect your eBay account</p>
+              <p className="ebay-connect-banner__sub">
+                Link your eBay seller account to pull your live listings into the dashboard.
+              </p>
+            </div>
+            <button
+              className="btn-ebay-link"
+              onClick={handleLinkEbay}
+              disabled={ebayLoading}
+            >
+              {ebayLoading ? "Redirecting…" : "🔗 Link eBay Account"}
+            </button>
           </div>
+        )}
+
+        {activePlatform === "eBay" && ebayLinked ? (
+          ebayLoading ? (
+            <div className="empty-state">Loading eBay listings…</div>
+          ) : ebayError ? (
+            <div className="empty-state" style={{ color: "#e05c5c" }}>
+              {ebayError}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="empty-state">
+              {query ? `No eBay listings match "${searchQuery}".` : "No eBay listings found."}
+            </div>
+          ) : (
+            <div className="listings-grid">
+              {filtered.map((l) => (
+                <GridCard key={l.id} listing={l} onClick={null} />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="listings-grid">
-            {filtered.map((l) => (
-              <GridCard
-                key={l.id}
-                listing={l}
-                onClick={() => setEditingListing(l)}
-              />
-            ))}
-          </div>
+          loading ? (
+            <div className="empty-state">Loading your listings…</div>
+          ) : error ? (
+            <div className="empty-state" style={{ color: "#e05c5c" }}>
+              {error}&nbsp;
+              <button
+                onClick={fetchListings}
+                style={{ cursor: "pointer", color: "#f0a500", background: "none", border: "none", fontFamily: "inherit" }}
+              >
+                Retry
+              </button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="empty-state">
+              {query
+                ? `No listings match "${searchQuery}".`
+                : "No listings yet. Click \"+ Add Listing\" to get started."
+              }
+            </div>
+          ) : (
+            <div className="listings-grid">
+              {filtered.map((l) => (
+                <GridCard
+                  key={l.id}
+                  listing={l}
+                  onClick={() => setEditingListing(l)}
+                />
+              ))}
+            </div>
+          )
         )}
       </main>
 
@@ -150,12 +390,21 @@ export default function Dashboard({ user, onLogout }) {
           onClose={() => setEditingListing(null)}
         />
       )}
+
+      {/* Profile modal */}
+      {showProfile && (
+        <ProfileForm
+          userId={userId}
+          currentEmail={user}
+          token={token}
+          onClose={() => setShowProfile(false)}
+        />
+      )}
     </div>
   );
 }
 
-// ── StatCard (local helper) ───────────────────────────────────────────────
-// Small stat display used only inside Dashboard.
+// ── StatCard ──────────────────────────────────────────────────────────────────
 function StatCard({ label, value, color }) {
   return (
     <div className="stat-card">
@@ -163,4 +412,100 @@ function StatCard({ label, value, color }) {
       <p className="stat-card__value" style={{ color }}>{value}</p>
     </div>
   );
+}
+
+// ── ProfileForm ───────────────────────────────────────────────────────────────
+function ProfileForm({ userId, currentEmail, token, onClose }) {
+  const [email, setEmail] = useState(currentEmail);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    setError(""); setSuccess("");
+    if (!email.trim()) { setError("Email cannot be empty."); return; }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/users/${userId}`, {
+        method:  "PUT",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.detail || "Update failed."); return; }
+      setSuccess("Email updated! Changes will show after next login.");
+    } catch {
+      setError("Could not reach the server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="form-overlay">
+      <div className="form-panel" style={{ width: 360 }}>
+        <div className="form-panel__header">
+          <h3 className="form-panel__title">Edit Profile</h3>
+          <button className="form-panel__close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="form-field">
+          <label>Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSave()}
+          />
+        </div>
+
+        {error   && <p style={{ color: "#e05c5c", fontSize: 12, marginTop: 8 }}>{error}</p>}
+        {success && <p style={{ color: "#4caf7d", fontSize: 12, marginTop: 8 }}>{success}</p>}
+
+        <div className="form-actions" style={{ marginTop: 16 }}>
+          <button className="btn-primary" onClick={handleSave} disabled={loading}>
+            {loading ? "Saving…" : "Save Changes"}
+          </button>
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Shape helpers ─────────────────────────────────────────────────────────────
+function normalise(l) {
+  return {
+    id: l.id,
+    title: l.title,
+    price: l.price,
+    condition: l.condition,
+    platform: l.platform,
+    category: l.category ?? "Other",
+    size: l.size ?? "",
+    notes: l.notes ?? "",
+    weightLbs: l.weight_lbs ?? null,
+    imageUrl: l.image_url ?? "",
+    status: l.status ?? "active",
+  };
+}
+
+function serialise(l, userId) {
+  return {
+    user_id: userId,
+    title: l.title,
+    price: parseFloat(l.price),
+    condition: l.condition,
+    platform: l.platform,
+    category: l.category,
+    size: l.size,
+    notes: l.notes,
+    weight_lbs: l.weightLbs ? parseFloat(l.weightLbs) : null,
+    image_url: l.imageUrl || null,
+    status: l.status ?? "active",
+  };
 }

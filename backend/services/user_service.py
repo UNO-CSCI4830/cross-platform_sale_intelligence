@@ -4,14 +4,14 @@ from backend.core.security import hash_password, verify_password
 from fastapi import HTTPException
 
 def create_user(email, first_name, last_name, password, db):
-    """
-    Creates a user by adding it to a sqlite table
-    """
+    """Creates a new user and saves them to the database."""
     hashed = hash_password(password)
-    user = User(email=email, 
-                first_name=first_name, 
-                last_name=last_name,
-                password_hash=hashed)  # store user email and password hash
+    user = User(
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        password_hash=hashed,
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -19,6 +19,7 @@ def create_user(email, first_name, last_name, password, db):
 
 
 def authenticate_user(email: str, password: str, db: Session):
+    """Returns the User if credentials are valid, otherwise None."""
     user = db.query(User).filter(User.email == email).first()
     if user and verify_password(password, user.password_hash):
         return user

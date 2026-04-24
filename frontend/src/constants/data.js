@@ -24,7 +24,7 @@ export const PLATFORM_COLORS = {
 };
 
 // ── Dropdown options ──────────────────────────────────────────────────────
-export const PLATFORMS = ["All Platforms", "Poshmark", "Depop", "Mercari", "eBay"];
+export const PLATFORMS = ["All Platforms", "Depop", "eBay"]; //removed poshmark and mercari
 export const CONDITIONS = ["New with Tags", "Like New", "Good", "Fair", "Poor"];
 export const CATEGORIES = ["Apparel", "Electronics", "Home & Garden", "Collectibles & Toys", "Handmade", "Other"];
 
