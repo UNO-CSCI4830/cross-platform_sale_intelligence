@@ -1,6 +1,6 @@
 // hooks/useComps.js
-// Reads resale_dashboard.json and returns pricing comps for a given search term.
-// Usage: const { comps, suggestion } = useComps(searchTerm);
+// Reads resale_dashboard.json and returns pricing + condition comps for a given search term.
+// Usage: const { comps, suggestion, conditionSuggestion } = useComps(searchTerm);
 
 import { useMemo } from "react";
 import dashboardData from "../data/resale_dashboard.json";
@@ -36,10 +36,35 @@ function score(recordKeywords, term) {
   return overlap / Math.max(tokA.size, tokB.length);
 }
 
+// Tally condition values across a set of comp records and return the most common one.
+// Returns null if no records have a condition field.
+function getMostCommonCondition(records) {
+  const tally = {};
+  for (const rec of records) {
+    if (!rec.condition) continue;
+    tally[rec.condition] = (tally[rec.condition] ?? 0) + 1;
+  }
+  const entries = Object.entries(tally);
+  if (!entries.length) return null;
+
+  // Sort descending by count and pick the winner
+  entries.sort((a, b) => b[1] - a[1]);
+  const [topCondition, topCount] = entries[0];
+
+  return {
+    condition:   topCondition,           // e.g. "Used"
+    count:       topCount,               // how many comps had this condition
+    total:       records.length,         // total comps in the bucket
+    percentage:  Math.round((topCount / records.length) * 100),
+    // All conditions with their counts, for optional display
+    breakdown:   Object.fromEntries(entries),
+  };
+}
+
 export function useComps(searchTerm) {
   return useMemo(() => {
     const term = (searchTerm || "").trim();
-    if (!term) return { comps: [], suggestion: null };
+    if (!term) return { comps: [], suggestion: null, conditionSuggestion: null };
 
     // Group all records by keyword bucket, pick the best-matching bucket
     const buckets = {};
@@ -53,7 +78,7 @@ export function useComps(searchTerm) {
     }
 
     const best = Object.values(buckets).sort((a, b) => b.s - a.s)[0];
-    if (!best || best.s < 0.3) return { comps: [], suggestion: null };
+    if (!best || best.s < 0.3) return { comps: [], suggestion: null, conditionSuggestion: null };
 
     const comps = best.records;
 
@@ -69,6 +94,7 @@ export function useComps(searchTerm) {
         sampleSize:      comps.length,
         keywords:        comps[0].keywords,
       },
+      conditionSuggestion: getMostCommonCondition(comps),
     };
   }, [searchTerm]);
 }

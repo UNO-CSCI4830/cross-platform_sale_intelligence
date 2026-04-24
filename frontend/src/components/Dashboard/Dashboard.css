@@ -257,3 +257,63 @@
 
 .btn-ebay-link:hover:not(:disabled) { opacity: 0.85; }
 .btn-ebay-link:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.main__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+ 
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+ 
+.search-bar__icon {
+  position: absolute;
+  left: 9px;
+  font-size: 12px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+ 
+.search-bar__input {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 8px 30px 8px 28px; /* left room for icon, right room for clear btn */
+  color: #f0ede8;
+  font-size: 13px;
+  font-family: inherit;
+  width: 220px;
+  outline: none;
+  transition: border-color 0.15s, width 0.2s;
+}
+ 
+.search-bar__input::placeholder {
+  color: #4a4a4a;
+}
+ 
+.search-bar__input:focus {
+  border-color: #f0a500;
+  width: 280px;
+}
+ 
+.search-bar__clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #4a4a4a;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+ 
+.search-bar__clear:hover {
+  color: #f0ede8;
+}
+ 
