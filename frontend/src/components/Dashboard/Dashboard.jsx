@@ -4,7 +4,7 @@ import { GridCard } from "../ListingCard/ListingCard";
 import { AddListingForm } from "../ListingForm/ListingForm";
 import { COLORS, PLATFORMS } from "../../constants/data";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://sale-intelligence-1.onrender.com";
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
 // Top-level component. Owns all app state:
